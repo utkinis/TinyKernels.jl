@@ -1,18 +1,18 @@
 name: CI
 on:
-  - push
-  - pull_request
-env:
-  JULIA_NUM_THREADS: 2
+  push:
+    branches:
+      - main
+  pull_request:
 jobs:
-  test:
+  run_tests:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         version:
-          - '1'   # Latest stable 1.x release of Julia
+          - '1'
           # - 'nightly'
         os:
           - ubuntu-latest
