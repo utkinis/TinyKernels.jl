@@ -22,7 +22,7 @@ mutable struct QueuePool
     queues::Vector{ROCQueue}
 end
 
-const MAX_QUEUES = 6
+const MAX_QUEUES = 1 # TODO: check why setting more than 1 doesn't work
 const QUEUES = Dict{Symbol,QueuePool}()
 
 function get_queue(priority::Symbol)
@@ -49,11 +49,14 @@ function (k::Kernel{<:ROCDevice})(args...)
         config = AMDGPU.launch_configuration(roc_kernel.fun)
         nthreads = (32, cld(config.groupsize, 32))
         ngrid = length.(range)
+        # create signal
+        sig = ROCSignal()
         # launch kernel
         queue = get_queue(priority)
-        signal = @roc groupsize=nthreads gridsize=ngrid queue=queue k.fun(range, args...)
+        AMDGPU.HSA.signal_store_screlease(sig.signal,1)
+        @roc wait=false mark=false signal=sig groupsize=nthreads gridsize=ngrid queue=queue k.fun(range, args...)
         # record event
-        push!(events, ROCEvent(signal))
+        push!(events, ROCEvent(sig))
     end
     return events
 end
