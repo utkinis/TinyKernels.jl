@@ -1,9 +1,17 @@
-# NOTE: This file contains many parts that are copied from the file runtests.jl from the Package ParallelStencil.jl.
-push!(LOAD_PATH, "../src")
-
 using TinyKernels
+using Test
 
-function runtests()
+@testset "TinyKernels.jl" begin
+    # Write your tests here.
+end
+
+
+# NOTE: This file contains many parts that are copied from the file runtests.jl from the Package ParallelStencil.jl.
+# push!(LOAD_PATH, "../src")
+
+# using TinyKernels
+
+# function runtests()
     # exename = joinpath(Sys.BINDIR, Base.julia_exename())
     # testdir = pwd()
     # istest(f) = endswith(f, ".jl") && startswith(basename(f), "test_")
@@ -20,6 +28,6 @@ function runtests()
     #     end
     # end
     # return nfail
-end
+# end
 
-exit(runtests())
+# exit(runtests())
