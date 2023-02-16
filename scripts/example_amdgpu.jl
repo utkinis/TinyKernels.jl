@@ -22,11 +22,11 @@ function main()
     C = 2.0 .* AMDGPU.ones(Float64, nx, ny)
     s = -1.0
 
-    ranges = ((4:nx-3, 4:ny-3),
-        (1:3, 1:ny),
-        (nx-2:nx, 1:ny),
-        (4:nx-3, 1:3),
-        (4:nx-3, ny-2:ny))
+    ranges = ((4:nx-3 , 4:ny-3 ),
+              (1:3    , 1:ny   ),
+              (nx-2:nx, 1:ny   ),
+              (4:nx-3 , 1:3    ),
+              (4:nx-3 , ny-2:ny))
 
     test_kernel! = Kernel(test_function!, ROCBackend.ROCDevice(), ranges)
 
