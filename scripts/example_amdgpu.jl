@@ -19,7 +19,7 @@ function main()
     nx, ny = 4096, 4096
     A = AMDGPU.zeros(Float64, nx, ny)
     B = AMDGPU.ones(Float64, nx, ny)
-    C = 2.0 .* AMDGPU.ones(Float64, nx, ny)
+    C = 2.0.*AMDGPU.ones(Float64, nx, ny)
     s = -1.0
 
     ranges = ((4:nx-3 , 4:ny-3 ),
@@ -29,10 +29,6 @@ function main()
               (4:nx-3 , ny-2:ny))
 
     test_kernel! = Kernel(test_function!, ROCBackend.ROCDevice())
-
-    # Doesn't seem to be necessary
-    # event = AMDGPU.barrier_and!(AMDGPU.default_queue(), AMDGPU.active_kernels(AMDGPU.default_queue()))
-    # wait(event)
 
     inner_event  =  test_kernel!(A, B, C, s; range = ranges[1])
     outer_events = [test_kernel!(A, B, C, s; range = ranges[i], priority=:high) for i in 2:lastindex(ranges)]
@@ -46,6 +42,7 @@ function main()
     return
 end
 
-for i in 1:5
+for i in 1:100
+    println("  step $i")
     main()
 end

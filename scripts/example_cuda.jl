@@ -43,8 +43,7 @@ function main()
     return
 end
 
-for i in 1:5
+for i in 1:100
+    println("  step $i")
     main()
 end
-
-# CUDA.@profile main()

@@ -8,21 +8,22 @@ using AMDGPU
 
 struct ROCDevice end
 
-struct ROCEvent{T}
-    signal::T
+struct ROCEvent
+    signal::ROCSignal
+    queue::ROCQueue
 end
 
 import Base: wait
 
-wait(ev::ROCEvent) = wait(ev.signal)
-wait(evs::AbstractArray{ROCEvent{T}}) where T = wait.(evs)
+wait(ev::ROCEvent) = wait(ev.signal; queue=ev.queue)
+wait(evs::AbstractArray{ROCEvent}) = wait.(evs)
 
 mutable struct QueuePool
     next_queue_idx::Int
     queues::Vector{ROCQueue}
 end
 
-const MAX_QUEUES = 1 # TODO: check why setting more than 1 doesn't work
+const MAX_QUEUES = 6 # TODO: check why setting more than 1 doesn't work
 const QUEUES = Dict{Symbol,QueuePool}()
 
 function get_queue(priority::Symbol)
@@ -42,7 +43,7 @@ end
 
 function (k::Kernel{<:ROCDevice})(args...; range, priority=:low)
     # compile ROC kernel
-    roc_kernel = @roc launch = false k.fun(range, args...)
+    roc_kernel = @roc launch=false k.fun(range, args...)
     # determine optimal launch parameters
     config = AMDGPU.launch_configuration(roc_kernel.fun)
     nthreads = (32, cld(config.groupsize, 32))
@@ -51,10 +52,9 @@ function (k::Kernel{<:ROCDevice})(args...; range, priority=:low)
     sig = ROCSignal()
     # launch kernel
     queue = get_queue(priority)
-    AMDGPU.HSA.signal_store_screlease(sig.signal,1)
+    AMDGPU.HSA.signal_store_screlease(sig.signal, 1)
     @roc wait=false mark=false signal=sig groupsize=nthreads gridsize=ngrid queue=queue k.fun(range, args...)
-    # record event
-    return ROCEvent(sig)
+    return ROCEvent(sig, queue)
 end
 
 end
