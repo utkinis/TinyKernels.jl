@@ -45,4 +45,4 @@ for i in 1:5
     main()
 end
 
-CUDA.@profile main()
+# CUDA.@profile main()
