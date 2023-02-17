@@ -30,7 +30,7 @@ function main()
 
     test_kernel! = Kernel(test_function!, ROCBackend.ROCDevice(), ranges)
 
-    # Doens't seem to be necessary
+    # Doesn't seem to be necessary
     # event = AMDGPU.barrier_and!(AMDGPU.default_queue(), AMDGPU.active_kernels(AMDGPU.default_queue()))
     # wait(event)
 
