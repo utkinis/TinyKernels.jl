@@ -15,7 +15,7 @@ end
 import Base: wait
 
 wait(ev::ROCEvent) = wait(ev.signal)
-wait(evs::AbstractArray{ROCEvent}) = wait.(evs)
+wait(evs::AbstractArray{ROCEvent{T}}) where T = wait.(evs)
 
 mutable struct QueuePool
     next_queue_idx::Int
