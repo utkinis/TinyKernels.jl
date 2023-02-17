@@ -23,7 +23,7 @@ mutable struct QueuePool
     queues::Vector{ROCQueue}
 end
 
-const MAX_QUEUES = 2 # TODO: Check why one only gets good perf with few queues
+const MAX_QUEUES = 2
 const QUEUES = Dict{Symbol,QueuePool}()
 
 function get_queue(priority::Symbol)
