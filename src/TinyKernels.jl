@@ -2,24 +2,11 @@ module TinyKernels
 
 export Kernel
 
-struct Kernel{BackendType,Fun,AR,PR}
+struct Kernel{BackendType,Fun}
     fun::Fun
-    ranges::AR
-    priorities::PR
 end
 
-function Kernel(fun, ::BackendType, ranges::AR) where {BackendType,AR}
-    priorities = Symbol[]
-    lp_ranges = 1:1
-    hp_ranges = 2:length(ranges)
-    for _ in lp_ranges
-        push!(priorities, :low)
-    end
-    for _ in hp_ranges
-        push!(priorities, :high)
-    end
-    return Kernel{BackendType,typeof(fun),AR,typeof(priorities)}(fun, ranges, priorities)
-end
+Kernel(fun, ::BackendType) where {BackendType} = Kernel{BackendType,typeof(fun)}(fun)
 
 include("cuda_backend.jl")
 

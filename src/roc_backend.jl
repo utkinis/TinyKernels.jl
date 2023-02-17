@@ -40,25 +40,21 @@ function pick_queue(pool::QueuePool)
     return pool.queues[pool.next_queue_idx]
 end
 
-function (k::Kernel{<:ROCDevice})(args...)
-    events = ROCEvent[]
-    for (range, priority) in zip(k.ranges, k.priorities)
-        # compile ROC kernel
-        roc_kernel = @roc launch = false k.fun(range, args...)
-        # determine optimal launch parameters
-        config = AMDGPU.launch_configuration(roc_kernel.fun)
-        nthreads = (32, cld(config.groupsize, 32))
-        ngrid = length.(range)
-        # create signal
-        sig = ROCSignal()
-        # launch kernel
-        queue = get_queue(priority)
-        AMDGPU.HSA.signal_store_screlease(sig.signal,1)
-        @roc wait=false mark=false signal=sig groupsize=nthreads gridsize=ngrid queue=queue k.fun(range, args...)
-        # record event
-        push!(events, ROCEvent(sig))
-    end
-    return events
+function (k::Kernel{<:ROCDevice})(args...; range, priority=:low)
+    # compile ROC kernel
+    roc_kernel = @roc launch = false k.fun(range, args...)
+    # determine optimal launch parameters
+    config = AMDGPU.launch_configuration(roc_kernel.fun)
+    nthreads = (32, cld(config.groupsize, 32))
+    ngrid = length.(range)
+    # create signal
+    sig = ROCSignal()
+    # launch kernel
+    queue = get_queue(priority)
+    AMDGPU.HSA.signal_store_screlease(sig.signal,1)
+    @roc wait=false mark=false signal=sig groupsize=nthreads gridsize=ngrid queue=queue k.fun(range, args...)
+    # record event
+    return ROCEvent(sig)
 end
 
 end

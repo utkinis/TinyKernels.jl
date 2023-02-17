@@ -48,25 +48,21 @@ function pick_stream(pool::StreamPool)
     return pool.streams[pool.next_stream_idx]
 end
 
-function (k::Kernel{<:CUDADevice})(args...)
-    events = CUDAEvent[]
-    for (range, priority) in zip(k.ranges, k.priorities)
-        # compile CUDA kernel
-        cu_kernel = @cuda launch = false k.fun(range, args...)
-        # determine optimal launch parameters
-        config = CUDA.launch_configuration(cu_kernel.fun)
-        nthreads = (32, cld(config.threads, 32))
-        nblocks = cld.(length.(range), nthreads)
-        # generate event
-        event = CuEvent(CUDA.EVENT_DISABLE_TIMING)
-        # launch kernel
-        stream = get_stream(priority)
-        cu_kernel(range, args...; threads=nthreads, blocks=nblocks, stream=stream)
-        # record event
-        CUDA.record(event, stream)
-        push!(events, CUDAEvent(event))
-    end
-    return events
+function (k::Kernel{<:CUDADevice})(args...; range, priority=:low)
+    # compile CUDA kernel
+    cu_kernel = @cuda launch = false k.fun(range, args...)
+    # determine optimal launch parameters
+    config = CUDA.launch_configuration(cu_kernel.fun)
+    nthreads = (32, cld(config.threads, 32))
+    nblocks = cld.(length.(range), nthreads)
+    # generate event
+    event = CuEvent(CUDA.EVENT_DISABLE_TIMING)
+    # launch kernel
+    stream = get_stream(priority)
+    cu_kernel(range, args...; threads=nthreads, blocks=nblocks, stream=stream)
+    # record event
+    CUDA.record(event, stream)
+    return CUDAEvent(event)
 end
 
 end

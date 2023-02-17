@@ -28,13 +28,14 @@ function main()
               (4:nx-3 , 1:3    ),
               (4:nx-3 , ny-2:ny))
 
-    test_kernel! = Kernel(test_function!, ROCBackend.ROCDevice(), ranges)
+    test_kernel! = Kernel(test_function!, ROCBackend.ROCDevice())
 
     # Doesn't seem to be necessary
     # event = AMDGPU.barrier_and!(AMDGPU.default_queue(), AMDGPU.active_kernels(AMDGPU.default_queue()))
     # wait(event)
 
-    inner_event, outer_events... = test_kernel!(A, B, C, s)
+    inner_event  =  test_kernel!(A, B, C, s; range = ranges[1])
+    outer_events = [test_kernel!(A, B, C, s; range = ranges[i], priority=:high) for i in 2:lastindex(ranges)]
 
     wait(outer_events)
     sleep(1 / 30)
