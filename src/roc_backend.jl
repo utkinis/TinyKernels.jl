@@ -23,7 +23,7 @@ mutable struct QueuePool
     queues::Vector{ROCQueue}
 end
 
-const MAX_QUEUES = 6 # TODO: check why setting more than 1 doesn't work
+const MAX_QUEUES = 2
 const QUEUES = Dict{Symbol,QueuePool}()
 
 function get_queue(priority::Symbol)
