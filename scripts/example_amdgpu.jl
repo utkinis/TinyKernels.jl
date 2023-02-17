@@ -9,7 +9,7 @@ function test_function!(range, A, B, C, s)
     iy = (workgroupIdx().y - 1) * workgroupDim().y + workitemIdx().y + (range[2][1] - 1)
     if ix ∈ axes(A, 1) && iy ∈ axes(A, 2)
         for _ in 1:10
-            A[ix, iy] = B[ix, iy] + s * C[ix, iy]
+            @inbounds A[ix, iy] = B[ix, iy] + s * C[ix, iy]
         end
     end
     return
