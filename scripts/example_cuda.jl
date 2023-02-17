@@ -43,7 +43,12 @@ function main()
     return
 end
 
+println(" Start")
 for i in 1:100
-    println("  step $i")
+    # println("  step $i")
+    (i==10) && (global t_tic = time_ns())
     main()
 end
+t_toc = time_ns() - t_tic
+t_tot = t_toc * 1e-9
+println(" Total time = $t_tot")
