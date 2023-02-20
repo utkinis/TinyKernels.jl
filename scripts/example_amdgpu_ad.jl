@@ -41,8 +41,8 @@ function main()
 
     for i in 1:100
         println("step $i")
-        inner_event  =  test_kernel!(A, B, C, s; range = ranges[1])
-        outer_events = [test_kernel!(A, B, C, s; range = ranges[i], priority=:high) for i in 2:lastindex(ranges)]
+        inner_event  =  test_kernel!(A, B, C, s; range=ranges[1])
+        outer_events = [test_kernel!(A, B, C, s; range=ranges[i], priority=:high) for i in 2:lastindex(ranges)]
         
         wait(outer_events)
         sleep(1 / 30)
