@@ -37,7 +37,7 @@ function main()
     dA = copy(B)
     dB = copy(B)
 
-    wait( grad_test_kernel!(Duplicated(A,dA), DuplicatedNoNeed(B,dB), Const(C), Const(s); range = size(A)) )
+    wait(grad_test_kernel!(Duplicated(A, dA), DuplicatedNoNeed(B, dB), Const(C), Const(s); range=size(A)))
 
     for i in 1:100
         println("step $i")

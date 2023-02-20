@@ -38,7 +38,7 @@ function main()
     dB = copy(A)
 
     synchronize()
-    wait( grad_test_kernel!(Duplicated(A,dA), DuplicatedNoNeed(B,dB), Const(C), Const(s); range = size(A)) )
+    wait(grad_test_kernel!(Duplicated(A, dA), DuplicatedNoNeed(B, dB), Const(C), Const(s); range=size(A)))
 
     synchronize()
     for i in 1:100
