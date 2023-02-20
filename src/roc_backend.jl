@@ -29,7 +29,14 @@ const QUEUES = Dict{Symbol,QueuePool}()
 function get_queue(priority::Symbol)
     pool = get!(QUEUES, priority) do
         max_queues = MAX_QUEUES
-        QueuePool(1, [ROCQueue(AMDGPU.default_device(); priority=priority) for _ in 1:max_queues])
+        roc_priority = if priority == :high
+            :high
+        elseif priority == :low
+            :low
+        else
+            error("unknown priority $priority")
+        end
+        QueuePool(1, [ROCQueue(AMDGPU.default_device(); priority=roc_priority) for _ in 1:max_queues])
     end
     return pick_queue(pool)
 end
