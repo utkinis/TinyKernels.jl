@@ -1,5 +1,4 @@
 using TinyKernels
-
 using TinyKernels.ROCBackend
 
 using AMDGPU
