@@ -65,4 +65,4 @@ function (k::Kernel{<:CUDADevice})(args...; range, priority=:low)
     return CUDAEvent(event)
 end
 
-end
+end # module

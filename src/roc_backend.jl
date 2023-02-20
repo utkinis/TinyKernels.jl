@@ -64,4 +64,4 @@ function (k::Kernel{<:ROCDevice})(args...; range, priority=:low)
     return ROCEvent(sig, queue)
 end
 
-end
+end # module
