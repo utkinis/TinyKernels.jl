@@ -50,7 +50,7 @@ end
 
 function (k::Kernel{<:CUDADevice})(args...; range, priority=:low)
     # compile CUDA kernel
-    cu_kernel = @cuda launch = false k.fun(range, args...)
+    cu_kernel = @cuda launch=false k.fun(range, args...)
     # determine optimal launch parameters
     config = CUDA.launch_configuration(cu_kernel.fun)
     nthreads = (32, cld(config.threads, 32))
