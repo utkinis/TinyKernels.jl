@@ -36,7 +36,7 @@ function get_queue(priority::Symbol)
         else
             error("unknown priority $priority")
         end
-        QueuePool(1, [AMDGPU.ROCQueue(default_device(); priority=roc_priority) for _ in 1:max_queues])
+        QueuePool(1, [AMDGPU.ROCQueue(AMDGPU.default_device(); priority=roc_priority) for _ in 1:max_queues])
     end
     return pick_queue(pool)
 end
@@ -49,9 +49,9 @@ function pick_queue(pool::QueuePool)
 end
 
 function (k::Kernel{<:ROCDevice})(args...; range, priority=:low)
-    ctx = Context{ROCDevice}(range)
+    ndrange = CartesianIndices(range)
     # compile ROC kernel
-    roc_kernel = AMDGPU.@roc launch=false k.fun(ctx, args...)
+    roc_kernel = AMDGPU.@roc launch=false k.fun(ndrange, args...)
     # determine optimal launch parameters
     config = AMDGPU.launch_configuration(roc_kernel.fun)
     nthreads = ntuple(length(range)) do i
@@ -68,11 +68,11 @@ function (k::Kernel{<:ROCDevice})(args...; range, priority=:low)
     # launch kernel
     queue = get_queue(priority)
     AMDGPU.HSA.signal_store_screlease(sig.signal, 1)
-    AMDGPU.@roc wait=false mark=false signal=sig groupsize=nthreads gridsize=range queue=queue k.fun(ctx, args...)
+    AMDGPU.@roc wait=false mark=false signal=sig groupsize=nthreads gridsize=range queue=queue k.fun(ndrange, args...)
     return ROCEvent(sig, queue)
 end
 
-device_array(::Type{T}, ::ROCDevice, dims...) where T = ROCArray{T}(undef, dims)
+device_array(::Type{T}, ::ROCDevice, dims...) where T = AMDGPU.ROCArray{T}(undef, dims)
 
 import AMDGPU.Device: @device_override
 
