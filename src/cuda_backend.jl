@@ -74,7 +74,7 @@ function (k::Kernel{<:CUDADevice})(args...; range, priority=:low)
     return CUDAEvent(event)
 end
 
-device_array(::Type{T}, ::CUDADevice, dims...) where T = CuArray{T}(undef, dims)
+device_array(::Type{T}, ::CUDADevice, dims...) where T = CUDA.CuArray{T}(undef, dims)
 
 import CUDA: @device_override
 
