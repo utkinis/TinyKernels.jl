@@ -39,7 +39,7 @@ function main(; device)
 
     test! = Kernel(kernel_test!, device)
 
-    synchronize()
+    sleep(1) # workaround to aviod synchronize device
     for i in 1:100
         println("step $i")
         inner_event = test!(view(A, ranges[1]...),
