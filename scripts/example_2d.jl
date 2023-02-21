@@ -12,7 +12,7 @@ using AMDGPU
     using TinyKernels.ROCBackend
 end
 
-@tiny function kernel_test!(A, B, C, s)
+@tiny function kernel_test_2d!(A, B, C, s)
     ix, iy = @indices()
     for _ in 1:10
         @inbounds A[ix, iy] = B[ix, iy] + s * C[ix, iy]
@@ -37,7 +37,7 @@ function main(; device)
               (4:nx-3 , 1:3    ),
               (4:nx-3 , ny-2:ny))
 
-    test! = Kernel(kernel_test!, device)
+    test! = Kernel(kernel_test_2d!, device)
 
     sleep(1) # workaround to aviod synchronize device
     for i in 1:100
