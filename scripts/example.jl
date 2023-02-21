@@ -41,7 +41,7 @@ function main(; device)
 
     sleep(1) # workaround to aviod synchronize device
     for i in 1:100
-        println("step $i")
+        println("  step $i")
         inner_event = test!(view(A, ranges[1]...),
                             view(B, ranges[1]...),
                             view(C, ranges[1]...), s; range=length.(ranges[1]))
@@ -59,4 +59,12 @@ function main(; device)
     return
 end
 
-main(;device=CUDADevice())
+@static if CUDA.functional()
+    println("running on CUDA device...")
+    main(;device=CUDADevice())
+end
+
+@static if AMDGPU.functional()
+    println("running on AMD device...")
+    main(;device=ROCBackend.ROCDevice())
+end
