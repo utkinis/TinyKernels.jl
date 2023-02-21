@@ -3,15 +3,14 @@ using TinyKernels.ROCBackend
 
 using AMDGPU
 
-function test_function!(range, A, B, C, s)
-    __ix = (workgroupIdx().x - 1) * workgroupDim().x + workitemIdx().x
-    __iy = (workgroupIdx().y - 1) * workgroupDim().y + workitemIdx().y
-    if __ix > length(range[1]) || __iy > length(range[2]) return end
-    ix,iy = range[1][__ix], range[2][__iy]
-    if ix ∈ axes(A, 1) && iy ∈ axes(A, 2)
-        for _ in 1:10
-            @inbounds A[ix, iy] = B[ix, iy] + s * C[ix, iy]
-        end
+function kernel_test!(range, A, B, C, s)
+    ix = (workgroupIdx().x - 1) * workgroupDim().x + workitemIdx().x
+    iy = (workgroupIdx().y - 1) * workgroupDim().y + workitemIdx().y
+    if ix > range[1] || iy > range[2]
+        return
+    end
+    for _ in 1:10
+        @inbounds A[ix, iy] = B[ix, iy] + s * C[ix, iy]
     end
     return
 end
@@ -29,15 +28,19 @@ function main()
               (4:nx-3 , 1:3    ),
               (4:nx-3 , ny-2:ny))
 
-    test_kernel! = Kernel(test_function!, ROCBackend.ROCDevice())
+    test! = Kernel(kernel_test!, ROCBackend.ROCDevice())
 
     for i in 1:100
         println("step $i")
-        inner_event  =  test_kernel!(A, B, C, s; range=ranges[1])
-        outer_events = [test_kernel!(A, B, C, s; range=ranges[i], priority=:high) for i in 2:lastindex(ranges)]
-        
+        inner_event = test!(view(A, ranges[1]...),
+                            view(B, ranges[1]...),
+                            view(C, ranges[1]...), s; range=length.(ranges[1]))
+        outer_events = [test!(view(A, ranges[i]...),
+                              view(B, ranges[i]...),
+                              view(C, ranges[i]...), s; range=length.(ranges[i]), priority=:high) for i in 2:lastindex(ranges)]
+
         wait(outer_events)
-        sleep(1 / 30)
+        sleep(1/30)
         wait(inner_event)
     end
 
