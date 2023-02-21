@@ -2,15 +2,15 @@ module ROCBackend
 
 export ROCDevice
 
-import TinyKernels: Kernel
+import TinyKernels: Kernel, __get_indices, device_array
 
-using AMDGPU
+import AMDGPU
 
 struct ROCDevice end
 
 struct ROCEvent
-    signal::ROCSignal
-    queue::ROCQueue
+    signal::AMDGPU.ROCSignal
+    queue::AMDGPU.ROCQueue
 end
 
 import Base: wait
@@ -20,7 +20,7 @@ wait(evs::AbstractArray{ROCEvent}) = wait.(evs)
 
 mutable struct QueuePool
     next_queue_idx::Int
-    queues::Vector{ROCQueue}
+    queues::Vector{AMDGPU.ROCQueue}
 end
 
 const MAX_QUEUES = 2
@@ -36,7 +36,7 @@ function get_queue(priority::Symbol)
         else
             error("unknown priority $priority")
         end
-        QueuePool(1, [ROCQueue(AMDGPU.default_device(); priority=roc_priority) for _ in 1:max_queues])
+        QueuePool(1, [AMDGPU.ROCQueue(default_device(); priority=roc_priority) for _ in 1:max_queues])
     end
     return pick_queue(pool)
 end
@@ -49,18 +49,46 @@ function pick_queue(pool::QueuePool)
 end
 
 function (k::Kernel{<:ROCDevice})(args...; range, priority=:low)
+    ctx = Context{ROCDevice}(range)
     # compile ROC kernel
-    roc_kernel = @roc launch=false k.fun(range, args...)
+    roc_kernel = AMDGPU.@roc launch=false k.fun(ctx, args...)
     # determine optimal launch parameters
     config = AMDGPU.launch_configuration(roc_kernel.fun)
-    nthreads = (32, cld(config.groupsize, 32))
+    nthreads = ntuple(length(range)) do i
+        if i == 1
+            min(range[1], 32)
+        elseif i == 2
+            min(range[2], cld(config.groupsize, 32))
+        elseif i == 3
+            min(range[3], 1)
+        end
+    end
     # create signal
-    sig = ROCSignal()
+    sig = AMDGPU.ROCSignal()
     # launch kernel
     queue = get_queue(priority)
     AMDGPU.HSA.signal_store_screlease(sig.signal, 1)
-    @roc wait=false mark=false signal=sig groupsize=nthreads gridsize=range queue=queue k.fun(range, args...)
+    AMDGPU.@roc wait=false mark=false signal=sig groupsize=nthreads gridsize=range queue=queue k.fun(ctx, args...)
     return ROCEvent(sig, queue)
+end
+
+device_array(::Type{T}, ::ROCDevice, dims...) where T = ROCArray{T}(undef, dims)
+
+import AMDGPU.Device: @device_override
+
+@device_override @inline __get_indices(::Val{1}) = (AMDGPU.workgroupIdx().x-1)*AMDGPU.workgroupDim().x + AMDGPU.workitemIdx().x
+
+@device_override @inline function __get_indices(::Val{2})
+    ix = (AMDGPU.workgroupIdx().x-1)*AMDGPU.workgroupDim().x + AMDGPU.workitemIdx().x
+    iy = (AMDGPU.workgroupIdx().y-1)*AMDGPU.workgroupDim().y + AMDGPU.workitemIdx().y
+    return ix, iy
+end
+
+@device_override @inline function __get_indices(::Val{3})
+    ix = (AMDGPU.workgroupIdx().x-1)*AMDGPU.workgroupDim().x + AMDGPU.workitemIdx().x
+    iy = (AMDGPU.workgroupIdx().y-1)*AMDGPU.workgroupDim().y + AMDGPU.workitemIdx().y
+    iz = (AMDGPU.workgroupIdx().z-1)*AMDGPU.workgroupDim().z + AMDGPU.workitemIdx().z
+    return ix, iy, iz
 end
 
 end

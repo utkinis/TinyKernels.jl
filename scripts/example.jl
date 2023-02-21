@@ -1,26 +1,34 @@
 using TinyKernels
 
-using TinyKernels.CUDABackend
-
 using CUDA
 
-function kernel_test!(range, A, B, C, s)
-    ix = (blockIdx().x - 1) * blockDim().x + threadIdx().x
-    iy = (blockIdx().y - 1) * blockDim().y + threadIdx().y
-    if ix > range[1] || iy > range[2]
-        return
-    end
+@static if CUDA.functional()
+    using TinyKernels.CUDABackend
+end
+
+using AMDGPU
+
+@static if AMDGPU.functional()
+    using TinyKernels.ROCBackend
+end
+
+@tiny function kernel_test!(A, B, C, s)
+    ix, iy = @indices()
     for _ in 1:10
         @inbounds A[ix, iy] = B[ix, iy] + s * C[ix, iy]
     end
     return
 end
 
-function main()
+function main(; device)
     nx, ny = 4096, 4096
-    A = CUDA.zeros(Float64, nx, ny)
-    B = CUDA.ones(Float64, nx, ny)
-    C = 2.0.*CUDA.ones(Float64, nx, ny)
+    A = device_array(Float64, device, nx, ny)
+    B = device_array(Float64, device, nx, ny)
+    C = device_array(Float64, device, nx, ny)
+
+    fill!(B,1.0)
+    fill!(C,2.0)
+
     s = -1.0
 
     ranges = ((4:nx-3 , 4:ny-3 ),
@@ -29,7 +37,7 @@ function main()
               (4:nx-3 , 1:3    ),
               (4:nx-3 , ny-2:ny))
 
-    test! = Kernel(kernel_test!, CUDADevice())
+    test! = Kernel(kernel_test!, device)
 
     synchronize()
     for i in 1:100
@@ -42,7 +50,7 @@ function main()
                               view(C, ranges[i]...), s; range=length.(ranges[i]), priority=:high) for i in 2:lastindex(ranges)]
 
         wait(outer_events)
-        sleep(1/30)
+        # sleep(1/30)
         wait(inner_event)
     end
 
@@ -51,4 +59,4 @@ function main()
     return
 end
 
-main()
+main(;device=CUDADevice())
