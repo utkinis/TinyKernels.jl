@@ -54,7 +54,7 @@ function (k::Kernel{<:CUDADevice})(args...; range, priority=:low)
     # determine optimal launch parameters
     config = CUDA.launch_configuration(cu_kernel.fun)
     nthreads = (32, cld(config.threads, 32))
-    nblocks = cld.(length.(range), nthreads)
+    nblocks = cld.(range, nthreads)
     # generate event
     event = CuEvent(CUDA.EVENT_DISABLE_TIMING)
     # launch kernel
