@@ -26,7 +26,7 @@ end
 end
 
 function main(; device)
-    nx, ny = 8, 4
+    nx, ny = 16, 16
     Ux  = device_array(Float64, device, nx, ny); copyto!(Ux, rand(nx, ny))
     Uy  = device_array(Float64, device, nx, ny); copyto!(Uy, rand(nx, ny))
     RUx = device_array(Float64, device, nx-2, ny); fill!(RUx, 0.0)
@@ -45,7 +45,7 @@ function main(; device)
     ∂Ux_∂R_exact[[2,end-1],[1,end]] .= -2.0 .* Ux[[2,end-1],[1,end]]
     
     ∂Uy_∂R_exact = device_array(Float64, device, nx, ny); fill!(∂Uy_∂R_exact, 0.0)
-    ∂Uy_∂R_exact[3:end-2  ,2:end-1] .=         Uy[3:end-2  ,2:end-1]
+    ∂Uy_∂R_exact[2:end-1,3:end-2  ] .=         Uy[2:end-1,3:end-2  ]
     ∂Uy_∂R_exact[2:end-1,[1,end  ]] .=  3.0 .* Uy[2:end-1,[1,end  ]]
     ∂Uy_∂R_exact[2:end-1,[2,end-1]] .=      .- Uy[2:end-1,[2,end-1]]
     ∂Uy_∂R_exact[[1,end],[1,end  ]] .=  2.0 .* Uy[[1,end],[1,end  ]]
