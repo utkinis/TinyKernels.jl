@@ -39,9 +39,9 @@ function main(; device)
     dA = copy(A); fill!(dA,1.0)
     dB = copy(A)
 
-    sleep(1)
+    TinyKernels.device_synchronize(device)
 
-    wait(grad_test_kernel!(DuplicatedNoNeed(A, dA), DuplicatedNoNeed(B, dB), Const(C), Const(s); range=size(A)))
+    wait(grad_test_kernel!(DuplicatedNoNeed(A, dA), DuplicatedNoNeed(B, dB), Const(C), Const(s); ndrange=size(A)))
 
     return
 end
