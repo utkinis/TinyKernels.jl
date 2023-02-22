@@ -2,7 +2,7 @@ module ROCBackend
 
 export ROCDevice
 
-import TinyKernels: Kernel, __get_indices, device_array
+import TinyKernels: Kernel, __get_index, device_array, device_synchronize
 
 import AMDGPU
 
@@ -48,45 +48,30 @@ function pick_queue(pool::QueuePool)
     return pool.queues[pool.next_queue_idx]
 end
 
-function (k::Kernel{<:ROCDevice})(args...; range, priority=:low, nthreads=nothing)
-    ndrange = CartesianIndices(range)
+function (k::Kernel{<:ROCDevice})(args...; ndrange, priority=:low, nthreads=nothing)
+    ndrange = CartesianIndices(ndrange)
     if isnothing(nthreads)
-        nthreads = ntuple(length(range)) do i
-            if i == 1
-                min(range[1], 32)
-            elseif i == 2
-                min(range[2], 8)
-            elseif i == 3
-                min(range[3], 1)
-            end
-        end
+        nthreads = min(length(ndrange), 256)
     end
+    ngrid = length(ndrange)
     # create signal
     sig = AMDGPU.ROCSignal()
     # launch kernel
     queue = get_queue(priority)
     AMDGPU.HSA.signal_store_screlease(sig.signal, 1)
-    AMDGPU.@roc wait=false mark=false signal=sig groupsize=nthreads gridsize=range queue=queue k.fun(ndrange, args...)
+    AMDGPU.@roc wait=false mark=false signal=sig groupsize=nthreads gridsize=ngrid queue=queue k.fun(ndrange, args...)
     return ROCEvent(sig, queue)
 end
 
 device_array(::Type{T}, ::ROCDevice, dims...) where T = AMDGPU.ROCArray{T}(undef, dims)
 
+function device_synchronize(::ROCDevice)
+    wait(AMDGPU.barrier_and!(AMDGPU.default_queue(), AMDGPU.active_kernels(AMDGPU.default_queue())))
+    return
+end
+
 import AMDGPU.Device: @device_override
 
-@device_override @inline __get_indices(::Val{1}) = (AMDGPU.workgroupIdx().x-1)*AMDGPU.workgroupDim().x + AMDGPU.workitemIdx().x
-
-@device_override @inline function __get_indices(::Val{2})
-    ix = (AMDGPU.workgroupIdx().x-1)*AMDGPU.workgroupDim().x + AMDGPU.workitemIdx().x
-    iy = (AMDGPU.workgroupIdx().y-1)*AMDGPU.workgroupDim().y + AMDGPU.workitemIdx().y
-    return ix, iy
-end
-
-@device_override @inline function __get_indices(::Val{3})
-    ix = (AMDGPU.workgroupIdx().x-1)*AMDGPU.workgroupDim().x + AMDGPU.workitemIdx().x
-    iy = (AMDGPU.workgroupIdx().y-1)*AMDGPU.workgroupDim().y + AMDGPU.workitemIdx().y
-    iz = (AMDGPU.workgroupIdx().z-1)*AMDGPU.workgroupDim().z + AMDGPU.workitemIdx().z
-    return ix, iy, iz
-end
+@device_override @inline __get_index() = (AMDGPU.workgroupIdx().x-1)*AMDGPU.workgroupDim().x + AMDGPU.workitemIdx().x
 
 end

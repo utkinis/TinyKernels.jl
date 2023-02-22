@@ -41,15 +41,11 @@ function main(; device)
 
     test! = Kernel(kernel_test_3d!, device)
 
-    sleep(1) # workaround to aviod synchronize device
+    TinyKernels.device_synchronize(device)
     for i in 1:100
         println("  step $i")
-        inner_event = test!(view(A, ranges[1]...),
-                            view(B, ranges[1]...),
-                            view(C, ranges[1]...), s; range=length.(ranges[1]))
-        outer_events = [test!(view(A, ranges[i]...),
-                              view(B, ranges[i]...),
-                              view(C, ranges[i]...), s; range=length.(ranges[i]), priority=:high) for i in 2:lastindex(ranges)]
+        inner_event  =  test!(A,B,C,s; ndrange=ranges[1])
+        outer_events = [test!(A,B,C,s; ndrange=ranges[i], priority=:high) for i in 2:lastindex(ranges)]
 
         wait(outer_events)
         # sleep(1/30)

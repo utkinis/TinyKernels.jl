@@ -1,6 +1,6 @@
 module TinyKernels
 
-export Kernel, @tiny, @indices, device_array
+export Kernel, @tiny, @indices, @linearindex, @cartesianindex, device_array, device_synchronize
 
 struct Kernel{BackendType,Fun}
     fun::Fun
@@ -10,14 +10,13 @@ Kernel(fun, ::BackendType) where {BackendType} = Kernel{BackendType,typeof(fun)}
 
 Base.similar(::Kernel{BE}, f::F) where {BE,F} = Kernel{BE,F}(f)
 
-function __get_indices end
-
-include("macros.jl")
-
-@inline __validindex(ndrange) = CartesianIndex(__get_indices(Val(ndims(ndrange)))) ∈ ndrange
-
 function device_array end
 
+function device_synchronize end
+
+function __get_index end
+
+include("macros.jl")
 
 include("cuda_backend.jl")
 

@@ -4,7 +4,7 @@ export CUDADevice
 
 import CUDA
 
-import TinyKernels: Kernel, __get_indices, device_array
+import TinyKernels: Kernel, device_array, device_synchronize, __get_index
 
 struct CUDADevice end
 
@@ -48,20 +48,12 @@ function pick_stream(pool::StreamPool)
     return pool.streams[pool.next_stream_idx]
 end
 
-function (k::Kernel{<:CUDADevice})(args...; range, priority=:low, nthreads=nothing)
-    ndrange = CartesianIndices(range)
+function (k::Kernel{<:CUDADevice})(args...; ndrange, priority=:low, nthreads=nothing)
+    ndrange = CartesianIndices(ndrange)
     if isnothing(nthreads)
-        nthreads = ntuple(length(range)) do i
-            if i == 1
-                min(range[1], 32)
-            elseif i == 2
-                min(range[2], 8)
-            elseif i == 3
-                min(range[3], 1)
-            end
-        end
+        nthreads = min(length(ndrange), 256)
     end
-    nblocks = cld.(range, nthreads)
+    nblocks = cld(length(ndrange), nthreads)
     # generate event
     event = CUDA.CuEvent(CUDA.EVENT_DISABLE_TIMING)
     # launch kernel
@@ -74,21 +66,10 @@ end
 
 device_array(::Type{T}, ::CUDADevice, dims...) where T = CUDA.CuArray{T}(undef, dims)
 
+device_synchronize(::CUDADevice) = CUDA.synchronize()
+
 import CUDA: @device_override
 
-@device_override @inline __get_indices(::Val{1}) = (CUDA.blockIdx().x-1)*CUDA.blockDim().x + CUDA.threadIdx().x
-
-@device_override @inline function __get_indices(::Val{2})
-    ix = (CUDA.blockIdx().x-1)*CUDA.blockDim().x + CUDA.threadIdx().x
-    iy = (CUDA.blockIdx().y-1)*CUDA.blockDim().y + CUDA.threadIdx().y
-    return ix, iy
-end
-
-@device_override @inline function __get_indices(::Val{3})
-    ix = (CUDA.blockIdx().x-1)*CUDA.blockDim().x + CUDA.threadIdx().x
-    iy = (CUDA.blockIdx().y-1)*CUDA.blockDim().y + CUDA.threadIdx().y
-    iz = (CUDA.blockIdx().z-1)*CUDA.blockDim().z + CUDA.threadIdx().z
-    return ix, iy, iz
-end
+@device_override @inline __get_index() = (CUDA.blockIdx().x-1)*CUDA.blockDim().x + CUDA.threadIdx().x
 
 end # module
