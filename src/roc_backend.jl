@@ -48,19 +48,17 @@ function pick_queue(pool::QueuePool)
     return pool.queues[pool.next_queue_idx]
 end
 
-function (k::Kernel{<:ROCDevice})(args...; range, priority=:low)
+function (k::Kernel{<:ROCDevice})(args...; range, priority=:low, nthreads=nothing)
     ndrange = CartesianIndices(range)
-    # compile ROC kernel
-    roc_kernel = AMDGPU.@roc launch=false k.fun(ndrange, args...)
-    # determine optimal launch parameters
-    config = AMDGPU.launch_configuration(roc_kernel.fun)
-    nthreads = ntuple(length(range)) do i
-        if i == 1
-            min(range[1], 32)
-        elseif i == 2
-            min(range[2], cld(config.groupsize, 32))
-        elseif i == 3
-            min(range[3], 1)
+    if isnothing(nthreads)
+        nthreads = ntuple(length(range)) do i
+            if i == 1
+                min(range[1], 32)
+            elseif i == 2
+                min(range[2], 8)
+            elseif i == 3
+                min(range[3], 1)
+            end
         end
     end
     # create signal
