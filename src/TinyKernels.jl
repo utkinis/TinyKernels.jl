@@ -8,6 +8,8 @@ end
 
 Kernel(fun, ::BackendType) where {BackendType} = Kernel{BackendType,typeof(fun)}(fun)
 
+Base.similar(::Kernel{BE}, f::F) where {BE,F} = Kernel{BE,F}(f)
+
 function __get_indices end
 
 include("macros.jl")
@@ -16,8 +18,11 @@ include("macros.jl")
 
 function device_array end
 
+
 include("cuda_backend.jl")
 
 include("roc_backend.jl")
+
+include("KernelAD.jl")
 
 end # module TinyKernels
