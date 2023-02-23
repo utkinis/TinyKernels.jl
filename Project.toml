@@ -1,6 +1,6 @@
 name = "TinyKernels"
 uuid = "f7cbc414-f748-44bf-86e6-e44e9a55e39d"
-authors = ["Ivan Utkin <iutkin@ethz.ch> and Ludovic Räss <ludovic.rass@gmail.com>"]
+authors = ["Ivan Utkin <iutkin@ethz.ch> and Ludovic Raess <ludovic.rass@gmail.com>"]
 version = "0.1.0"
 
 [deps]
