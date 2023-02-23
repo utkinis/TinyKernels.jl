@@ -42,8 +42,8 @@ function main(; device)
     test! = Kernel(kernel_test_3d!, device)
 
     TinyKernels.device_synchronize(device)
-    for i in 1:100
-        println("  step $i")
+    for it in 1:100
+        println("  step $it")
         inner_event  =  test!(A,B,C,s; ndrange=ranges[1])
         outer_events = [test!(A,B,C,s; ndrange=ranges[i], priority=:high) for i in 2:lastindex(ranges)]
 
