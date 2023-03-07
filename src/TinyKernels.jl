@@ -22,6 +22,8 @@ include("cuda_backend.jl")
 
 include("roc_backend.jl")
 
+include("metal_backend.jl")
+
 include("KernelAD.jl")
 
 end # module TinyKernels
