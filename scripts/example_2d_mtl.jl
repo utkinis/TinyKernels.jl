@@ -8,9 +8,9 @@ end
 
 @tiny function kernel_test_2d!(A, B, C, s)
     ix, iy = @indices()
-    # for _ in 1:10
-    #     @inbounds A[ix, iy] = B[ix, iy] + s * C[ix, iy]
-    # end
+    for _ in 1:10
+        @inbounds A[ix, iy] = B[ix, iy] + s * C[ix, iy]
+    end
     return
 end
 
@@ -34,16 +34,16 @@ function main(; device)
     test! = Kernel(kernel_test_2d!, device)
 
     TinyKernels.device_synchronize(device)
-    # for it in 1:100
-    #     println("  step $it")
-        ev = test!(A,B,C,s; ndrange=size(A))
-    #     wait(ev)
-    #     # inner_event  =  test!(A,B,C,s; ndrange=ranges[1])
-    #     # outer_events = [test!(A,B,C,s; ndrange=ranges[i], priority=:high) for i in 2:lastindex(ranges)]
-    #     # wait(outer_events)
-    #     # # sleep(1/30)
-    #     # wait(inner_event)
-    # end
+    for it in 1:100
+        println("  step $it")
+        # ev = test!(A,B,C,s; ndrange=size(A))
+        # wait(ev)
+        inner_event  =  test!(A,B,C,s; ndrange=ranges[1])
+        outer_events = [test!(A,B,C,s; ndrange=ranges[i]) for i in 2:lastindex(ranges)]
+        wait(outer_events)
+        # sleep(1/30)
+        wait(inner_event)
+    end
 
     @assert A ≈ B .+ s .* C
     return
@@ -52,5 +52,4 @@ end
 @static if !isnothing(Metal.devices())
     println("running on Metal device...")
     main(;device=MetalDevice())
-    # @show MetalDevice()
 end

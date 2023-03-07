@@ -68,6 +68,6 @@ device_synchronize(::MetalDevice) = Metal.synchronize() # device_synchronize() f
 
 import Metal: @device_override
 
-@device_override @inline __get_index() = thread_position_in_grid_1d().x
+@device_override @inline __get_index() = Metal.thread_position_in_grid_1d()
 
 end # module
