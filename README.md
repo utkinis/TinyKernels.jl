@@ -8,6 +8,11 @@ TinyKernels.jl is mostly a heavily stripped-down version of [KernelAbstractions.
 
 TinyKernels.jl allows to explicitly launch GPU kernels asynchronously on different streams or queues with given priority. This feature facilitates the overlap between computations and memory transfers in distributed configurations.
 
-Preliminary benchmarks can be found [TinyBenchmarks.jl](https://github.com/luraess/TinyBenchmarks.jl).
+Preliminary benchmarks can be found in [TinyBenchmarks.jl](https://github.com/luraess/TinyBenchmarks.jl) and Metal playground in [MetalGPU](https://github.com/luraess/MetalGPU).
 
 Stay tuned :rocket:
+
+
+### Notes
+
+⚠️ **Metal backend:** currently, only `Float32` is being supported. For `Float64`, one could try using a construct from [DoubleFloats.jl](https://github.com/JuliaMath/DoubleFloats.jl/blob/ef689ccbab37d84943e2533309d34c6665229cab/src/Double.jl#L30) _which may impact performance_.
