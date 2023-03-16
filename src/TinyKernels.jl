@@ -10,6 +10,8 @@ Kernel(fun, ::BackendType) where {BackendType} = Kernel{BackendType,typeof(fun)}
 
 Base.similar(::Kernel{BE}, f::F) where {BE,F} = Kernel{BE,F}(f)
 
+const __INDEX__ = gensym("I")
+
 function device_array end
 
 function device_synchronize end
