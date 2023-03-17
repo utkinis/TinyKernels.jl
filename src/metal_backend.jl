@@ -4,10 +4,9 @@ export MetalDevice
 
 import Metal
 
-import TinyKernels: Kernel, device_array, device_synchronize, __get_index
+import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index
 
-struct MetalDevice end
-
+struct MetalDevice <: GPUDevice end
 struct MetalEvent
     queue::Metal.MtlCommandQueue
 end

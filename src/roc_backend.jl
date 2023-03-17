@@ -2,11 +2,11 @@ module ROCBackend
 
 export ROCDevice
 
-import TinyKernels: Kernel, __get_index, device_array, device_synchronize
+import TinyKernels: GPUDevice, Kernel, __get_index, device_array, device_synchronize
 
 import AMDGPU
 
-struct ROCDevice end
+struct ROCDevice <: GPUDevice end
 
 struct ROCEvent
     signal::AMDGPU.ROCSignal
