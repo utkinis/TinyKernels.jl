@@ -32,6 +32,6 @@ include("metal_backend.jl")
 
 include("cpu_backend.jl")
 
-include("KernelAD.jl")
+include("kernel_AD.jl")
 
 end # module TinyKernels
