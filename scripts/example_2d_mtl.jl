@@ -6,10 +6,12 @@ using Metal
     using TinyKernels.MetalBackend
 end
 
+using TinyKernels.CPUBackend
+
 @tiny function kernel_test_2d!(A, B, C, s)
     ix, iy = @indices()
     for _ in 1:10
-        @inbounds A[ix, iy] = B[ix, iy] + s * C[ix, iy]
+        A[ix, iy] = B[ix, iy] + s * C[ix, iy]
     end
     return
 end
@@ -31,7 +33,7 @@ function main(; device)
               (4:nx-3 , 1:3    ),
               (4:nx-3 , ny-2:ny))
 
-    test! = Kernel(kernel_test_2d!, device)
+    test! = kernel_test_2d!(device)
 
     TinyKernels.device_synchronize(device)
     for it in 1:100
@@ -44,7 +46,8 @@ function main(; device)
         # sleep(1/30)
         wait(inner_event)
     end
-
+    # @show A
+    # @show B .+ s .* C
     @assert A ≈ B .+ s .* C
     return
 end
@@ -53,3 +56,6 @@ end
     println("running on Metal device...")
     main(;device=MetalDevice())
 end
+
+println("running on CPU device...")
+main(;device=CPUDevice())

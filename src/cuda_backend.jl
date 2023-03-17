@@ -4,9 +4,9 @@ export CUDADevice
 
 import CUDA
 
-import TinyKernels: Kernel, device_array, device_synchronize, __get_index
+import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index
 
-struct CUDADevice end
+struct CUDADevice <: GPUDevice end
 
 struct CUDAEvent
     event::CUDA.CuEvent

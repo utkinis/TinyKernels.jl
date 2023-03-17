@@ -1,10 +1,14 @@
 module TinyKernels
 
-export Kernel, @tiny, @indices, @linearindex, @cartesianindex, device_array, device_synchronize
+export Kernel, GPUDevice, CPUDevice, @tiny, @indices, @linearindex, @cartesianindex, device_array, device_synchronize
 
 struct Kernel{BackendType,Fun}
     fun::Fun
 end
+
+abstract type Backend end
+
+abstract type GPUDevice <: Backend end
 
 Kernel(fun, ::BackendType) where {BackendType} = Kernel{BackendType,typeof(fun)}(fun)
 
@@ -25,6 +29,8 @@ include("cuda_backend.jl")
 include("roc_backend.jl")
 
 include("metal_backend.jl")
+
+include("cpu_backend.jl")
 
 include("KernelAD.jl")
 
