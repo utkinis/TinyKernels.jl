@@ -49,21 +49,16 @@ function main(; device)
 
     # Generate kernel
     test! = kernel_test!(device)
-    println("hi 1")
     # Generate kernel gradient
     grad_test_kernel! = Enzyme.autodiff(test!)
-    println("hi 2")
     # Evaluate forward problem
     TinyKernels.device_synchronize(device)
-    println("hi 3")
     wait(test!(RUx, RUy, Ux, Uy; ndrange=size(Ux)))
-    println("hi 4")
     # Compute VJP
     wait(grad_test_kernel!(DuplicatedNoNeed(RUx, ∂Rx_∂R),
                            DuplicatedNoNeed(RUy, ∂Ry_∂R),
                            DuplicatedNoNeed(Ux , ∂Ux_∂R),
                            DuplicatedNoNeed(Uy , ∂Uy_∂R); ndrange=size(Ux)))
-    println("hi 5")
     @assert ∂Ux_∂R ≈ ∂Ux_∂R_exact
     @assert ∂Uy_∂R ≈ ∂Uy_∂R_exact
     return
