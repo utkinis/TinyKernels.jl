@@ -14,6 +14,8 @@ using AMDGPU
     using TinyKernels.ROCBackend
 end
 
+using TinyKernels.CPUBackend
+
 @tiny function kernel_test!(RUx, RUy, Ux, Uy)
     ix, iy = @indices()
     if ix ∈ axes(RUx, 1) && iy ∈ axes(RUx, 2)
@@ -52,7 +54,7 @@ function main(; device)
     ∂Uy_∂R_exact[[1,end],[2,end-1]] .= -2.0 .* Uy[[1,end],[2,end-1]]
 
     # Generate kernel
-    test! = Kernel(kernel_test!, device)
+    test! = kernel_test!(device)
     # Generate kernel gradient
     grad_test_kernel! = Enzyme.autodiff(test!)
     # Evaluate forward problem
@@ -77,3 +79,6 @@ end
     println("running on AMD device...")
     main(; device=ROCBackend.ROCDevice())
 end
+
+println("running on CPU device...")
+main(; device=CPUDevice())

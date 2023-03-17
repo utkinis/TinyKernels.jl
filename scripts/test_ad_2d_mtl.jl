@@ -8,6 +8,8 @@ using Metal
     using TinyKernels.MetalBackend
 end
 
+using TinyKernels.CPUBackend
+
 @tiny function kernel_test!(RUx, RUy, Ux, Uy)
     ix, iy = @indices()
     if ix ∈ axes(RUx, 1) && iy ∈ axes(RUx, 2)
@@ -31,34 +33,39 @@ function main(; device)
     ∂Ux_∂R = device_array(Float32, device, nx, ny); fill!(∂Ux_∂R, 0.0)
     ∂Uy_∂R = device_array(Float32, device, nx, ny); fill!(∂Uy_∂R, 0.0)
     # # Exact VJP
-    # ∂Ux_∂R_exact = device_array(Float32, device, nx, ny); fill!(∂Ux_∂R_exact, 0.0)
-    # ∂Ux_∂R_exact[3:end-2  ,2:end-1] .=           Ux[3:end-2  ,2:end-1]
-    # ∂Ux_∂R_exact[[1,end  ],2:end-1] .=  3.0f0 .* Ux[[1,end  ],2:end-1]
-    # ∂Ux_∂R_exact[[2,end-1],2:end-1] .=        .- Ux[[2,end-1],2:end-1]
-    # ∂Ux_∂R_exact[[1,end  ],[1,end]] .=  2.0f0 .* Ux[[1,end]  ,[1,end]]
-    # ∂Ux_∂R_exact[[2,end-1],[1,end]] .= -2.0f0 .* Ux[[2,end-1],[1,end]]
+    ∂Ux_∂R_exact = device_array(Float32, device, nx, ny); fill!(∂Ux_∂R_exact, 0.0)
+    ∂Ux_∂R_exact[3:end-2  ,2:end-1] .=           Ux[3:end-2  ,2:end-1]
+    ∂Ux_∂R_exact[[1,end  ],2:end-1] .=  3.0f0 .* Ux[[1,end  ],2:end-1]
+    ∂Ux_∂R_exact[[2,end-1],2:end-1] .=        .- Ux[[2,end-1],2:end-1]
+    ∂Ux_∂R_exact[[1,end  ],[1,end]] .=  2.0f0 .* Ux[[1,end]  ,[1,end]]
+    ∂Ux_∂R_exact[[2,end-1],[1,end]] .= -2.0f0 .* Ux[[2,end-1],[1,end]]
     
-    # ∂Uy_∂R_exact = device_array(Float32, device, nx, ny); fill!(∂Uy_∂R_exact, 0.0)
-    # ∂Uy_∂R_exact[2:end-1,3:end-2  ] .=           Uy[2:end-1,3:end-2  ]
-    # ∂Uy_∂R_exact[2:end-1,[1,end  ]] .=  3.0f0 .* Uy[2:end-1,[1,end  ]]
-    # ∂Uy_∂R_exact[2:end-1,[2,end-1]] .=        .- Uy[2:end-1,[2,end-1]]
-    # ∂Uy_∂R_exact[[1,end],[1,end  ]] .=  2.0f0 .* Uy[[1,end],[1,end  ]]
-    # ∂Uy_∂R_exact[[1,end],[2,end-1]] .= -2.0f0 .* Uy[[1,end],[2,end-1]]
+    ∂Uy_∂R_exact = device_array(Float32, device, nx, ny); fill!(∂Uy_∂R_exact, 0.0)
+    ∂Uy_∂R_exact[2:end-1,3:end-2  ] .=           Uy[2:end-1,3:end-2  ]
+    ∂Uy_∂R_exact[2:end-1,[1,end  ]] .=  3.0f0 .* Uy[2:end-1,[1,end  ]]
+    ∂Uy_∂R_exact[2:end-1,[2,end-1]] .=        .- Uy[2:end-1,[2,end-1]]
+    ∂Uy_∂R_exact[[1,end],[1,end  ]] .=  2.0f0 .* Uy[[1,end],[1,end  ]]
+    ∂Uy_∂R_exact[[1,end],[2,end-1]] .= -2.0f0 .* Uy[[1,end],[2,end-1]]
 
     # Generate kernel
-    test! = Kernel(kernel_test!, device)
+    test! = kernel_test!(device)
+    println("hi 1")
     # Generate kernel gradient
     grad_test_kernel! = Enzyme.autodiff(test!)
+    println("hi 2")
     # Evaluate forward problem
     TinyKernels.device_synchronize(device)
+    println("hi 3")
     wait(test!(RUx, RUy, Ux, Uy; ndrange=size(Ux)))
+    println("hi 4")
     # Compute VJP
     wait(grad_test_kernel!(DuplicatedNoNeed(RUx, ∂Rx_∂R),
                            DuplicatedNoNeed(RUy, ∂Ry_∂R),
                            DuplicatedNoNeed(Ux , ∂Ux_∂R),
                            DuplicatedNoNeed(Uy , ∂Uy_∂R); ndrange=size(Ux)))
-    # @assert ∂Ux_∂R ≈ ∂Ux_∂R_exact
-    # @assert ∂Uy_∂R ≈ ∂Uy_∂R_exact
+    println("hi 5")
+    @assert ∂Ux_∂R ≈ ∂Ux_∂R_exact
+    @assert ∂Uy_∂R ≈ ∂Uy_∂R_exact
     return
 end
 
@@ -66,3 +73,6 @@ end
     println("running on Metal device...")
     main(;device=MetalDevice())
 end
+
+println("running on CPU device...")
+main(; device=CPUDevice())

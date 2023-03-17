@@ -11,7 +11,7 @@ using TinyKernels.CPUBackend
 @tiny function kernel_test_2d!(A, B, C, s)
     ix, iy = @indices()
     for _ in 1:10
-        A[ix, iy] = B[ix, iy] + s * C[ix, iy]
+        @inbounds A[ix, iy] = B[ix, iy] + s * C[ix, iy]
     end
     return
 end
@@ -46,8 +46,7 @@ function main(; device)
         # sleep(1/30)
         wait(inner_event)
     end
-    # @show A
-    # @show B .+ s .* C
+
     @assert A ≈ B .+ s .* C
     return
 end

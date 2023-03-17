@@ -12,6 +12,8 @@ using AMDGPU
     using TinyKernels.ROCBackend
 end
 
+using TinyKernels.CPUBackend
+
 @tiny function kernel_test_2d!(A, B, C, s)
     ix, iy = @indices()
     for _ in 1:10
@@ -37,7 +39,7 @@ function main(; device)
               (4:nx-3 , 1:3    ),
               (4:nx-3 , ny-2:ny))
 
-    test! = Kernel(kernel_test_2d!, device)
+    test! = kernel_test_2d!(device)
 
     TinyKernels.device_synchronize(device)
     for it in 1:100
@@ -56,10 +58,13 @@ end
 
 @static if CUDA.functional()
     println("running on CUDA device...")
-    main(;device=CUDADevice())
+    main(; device=CUDADevice())
 end
 
 @static if AMDGPU.functional()
     println("running on AMD device...")
-    main(;device=ROCBackend.ROCDevice())
+    main(; device=ROCBackend.ROCDevice())
 end
+
+println("running on CPU device...")
+main(; device=CPUDevice())

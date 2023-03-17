@@ -12,6 +12,8 @@ using AMDGPU
     using TinyKernels.ROCBackend
 end
 
+using TinyKernels.CPUBackend
+
 @tiny function kernel_test_3d!(A, B, C, s)
     ix, iy, iz = @indices()
     for _ in 1:10
@@ -26,8 +28,8 @@ function main(; device)
     B = device_array(Float64, device, nx, ny, nz)
     C = device_array(Float64, device, nx, ny, nz)
 
-    fill!(B,1.0)
-    fill!(C,2.0)
+    fill!(B, 1.0)
+    fill!(C, 2.0)
 
     s = -1.0
 
@@ -39,13 +41,13 @@ function main(; device)
               (1:nx   , 1:ny   , 1:3    ),
               (1:nx   , 1:ny   , nz-2:nz))
 
-    test! = Kernel(kernel_test_3d!, device)
+    test! = kernel_test_3d!(device)
 
     TinyKernels.device_synchronize(device)
     for it in 1:100
         println("  step $it")
-        inner_event  =  test!(A,B,C,s; ndrange=ranges[1])
-        outer_events = [test!(A,B,C,s; ndrange=ranges[i], priority=:high) for i in 2:lastindex(ranges)]
+        inner_event  =  test!(A, B, C, s; ndrange=ranges[1])
+        outer_events = [test!(A, B, C, s; ndrange=ranges[i], priority=:high) for i in 2:lastindex(ranges)]
 
         wait(outer_events)
         # sleep(1/30)
@@ -59,10 +61,13 @@ end
 
 @static if CUDA.functional()
     println("running on CUDA device...")
-    main(;device=CUDADevice())
+    main(; device=CUDADevice())
 end
 
 @static if AMDGPU.functional()
     println("running on AMD device...")
-    main(;device=ROCBackend.ROCDevice())
+    main(; device=ROCBackend.ROCDevice())
 end
+
+println("running on CPU device...")
+main(; device=CPUDevice())
