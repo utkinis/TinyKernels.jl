@@ -8,7 +8,7 @@ TinyKernels.jl is mostly a heavily stripped-down version of [KernelAbstractions.
 
 TinyKernels.jl allows to explicitly launch GPU kernels asynchronously on different streams or queues with given priority. This feature facilitates the overlap between computations and memory transfers in distributed configurations.
 
-TinyKernels.jl supports automatic differentiation with [Enzyme.jl](https://github.com/EnzymeAD/Enzyme.jl) overloading the `Enzyme.autodiff_deferred` function to enable reverse mode AD of GPU kernels.
+TinyKernels.jl supports automatic differentiation with [Enzyme.jl](https://github.com/EnzymeAD/Enzyme.jl) overloading the `Enzyme.autodiff` function to enable reverse mode AD of GPU (and CPU) kernels.
 
 Preliminary benchmarks can be found in [TinyBenchmarks.jl](https://github.com/luraess/TinyBenchmarks.jl) and Metal playground in [MetalGPU](https://github.com/luraess/MetalGPU).
 
