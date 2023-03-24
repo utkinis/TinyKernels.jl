@@ -3,13 +3,11 @@ using TinyKernels.KernelAD
 using Enzyme
 
 using CUDA
-
 @static if CUDA.functional()
     using TinyKernels.CUDABackend
 end
 
 using AMDGPU
-
 @static if AMDGPU.functional()
     using TinyKernels.ROCBackend
 end
