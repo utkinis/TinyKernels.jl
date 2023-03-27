@@ -14,6 +14,9 @@ Kernel(fun, ::BackendType) where {BackendType} = Kernel{BackendType,typeof(fun)}
 
 Base.similar(::Kernel{BE}, f::F) where {BE,F} = Kernel{BE,F}(f)
 
+@inline ndrange_to_indices(ndrange::Tuple) = CartesianIndices(ndrange)
+@inline ndrange_to_indices(ndrange::AbstractUnitRange) = CartesianIndices((ndrange,))
+
 const __INDEX__ = gensym("I")
 
 function device_array end
