@@ -36,9 +36,9 @@ include("CPUBackend.jl")
 include("KernelAD.jl")
 
 @static if !isdefined(Base, :get_extension)
-    @require CUDA="052768ef-5323-5732-b1bb-66c8b64840ba" include("../backends/CUDABackend.jl")
-    @require AMDGPU="21141c5a-9bdb-4563-92ae-f87d6854732e" include("../backends/ROCBackend.jl")
-    @require Metal="dde4c033-4e86-420c-a63e-0dd931031962" include("../backends/MetalBackend.jl")
+    @require CUDA="052768ef-5323-5732-b1bb-66c8b64840ba" include("../ext/CUDABackend.jl")
+    @require AMDGPU="21141c5a-9bdb-4563-92ae-f87d6854732e" include("../ext/ROCBackend.jl")
+    @require Metal="dde4c033-4e86-420c-a63e-0dd931031962" include("../ext/MetalBackend.jl")
 end
 
 end # module TinyKernels
