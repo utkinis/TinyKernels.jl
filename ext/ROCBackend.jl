@@ -2,7 +2,7 @@ module ROCBackend
 
 export ROCDevice
 
-import AMDGPU
+isdefined(Base, :get_extension) ? (import AMDGPU) : (import ..AMDGPU)
 
 import TinyKernels: GPUDevice, Kernel, __get_index, device_array, device_synchronize, ndrange_to_indices
 

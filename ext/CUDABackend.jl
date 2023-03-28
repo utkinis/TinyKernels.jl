@@ -2,7 +2,7 @@ module CUDABackend
 
 export CUDADevice
 
-import CUDA
+isdefined(Base, :get_extension) ? (import CUDA) : (import ..CUDA)
 
 import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index, ndrange_to_indices
 
