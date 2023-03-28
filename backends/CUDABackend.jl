@@ -4,7 +4,7 @@ export CUDADevice
 
 import CUDA
 
-import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index
+import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index, ndrange_to_indices
 
 struct CUDADevice <: GPUDevice end
 
@@ -49,7 +49,7 @@ function pick_stream(pool::StreamPool)
 end
 
 function (k::Kernel{<:CUDADevice})(args...; ndrange, priority=:low, nthreads=nothing)
-    ndrange = CartesianIndices(ndrange)
+    ndrange = ndrange_to_indices(ndrange)
     if isnothing(nthreads)
         nthreads = min(length(ndrange), 256)
     end

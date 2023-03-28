@@ -4,7 +4,7 @@ export ROCDevice
 
 import AMDGPU
 
-import TinyKernels: GPUDevice, Kernel, __get_index, device_array, device_synchronize
+import TinyKernels: GPUDevice, Kernel, __get_index, device_array, device_synchronize, ndrange_to_indices
 
 struct ROCDevice <: GPUDevice end
 
@@ -49,7 +49,7 @@ function pick_queue(pool::QueuePool)
 end
 
 function (k::Kernel{<:ROCDevice})(args...; ndrange, priority=:low, nthreads=nothing)
-    ndrange = CartesianIndices(ndrange)
+    ndrange = ndrange_to_indices(ndrange)
     if isnothing(nthreads)
         nthreads = min(length(ndrange), 256)
     end

@@ -4,7 +4,7 @@ export MetalDevice
 
 import Metal
 
-import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index
+import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index, ndrange_to_indices
 
 struct MetalDevice <: GPUDevice end
 struct MetalEvent
@@ -50,7 +50,7 @@ function pick_queue(pool::QueuePool)
 end
 
 function (k::Kernel{<:MetalDevice})(args...; ndrange, nthreads=nothing)
-    ndrange = CartesianIndices(ndrange)
+    ndrange = ndrange_to_indices(ndrange)
     if isnothing(nthreads)
         nthreads = min(length(ndrange), 256)
     end
