@@ -17,7 +17,7 @@ import Base: wait
 struct MetalDevice <: GPUDevice end
 
 struct MetalEvent
-    queue::Metal.MtlCommandQueue
+    queue::Metal.MTLCommandQueue
 end
 
 wait(ev::MetalEvent) = Metal.synchronize(ev.queue)
@@ -25,7 +25,7 @@ wait(evs::AbstractArray{MetalEvent}) = wait.(evs)
 
 mutable struct QueuePool
     next_queue_idx::Int
-    queues::Vector{Metal.MtlCommandQueue}
+    queues::Vector{Metal.MTLCommandQueue}
 end
 
 const MAX_QUEUES = 6
@@ -44,7 +44,7 @@ function get_queue(priority::Symbol) # no priority selection yet
         #     error("unknown priority $priority")
         # end
         dev = Metal.current_device()
-        QueuePool(1, [Metal.MtlCommandQueue(dev) for _ in 1:max_queues])
+        QueuePool(1, [Metal.MTLCommandQueue(dev) for _ in 1:max_queues])
     end
     return pick_queue(pool)
 end
