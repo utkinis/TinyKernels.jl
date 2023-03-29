@@ -1,6 +1,6 @@
 module TinyKernels
 
-export Kernel, GPUDevice, CPUDevice, @tiny, @indices, @linearindex, @cartesianindex, device_array, device_synchronize
+export Kernel, GPUDevice, CPUDevice, device_array, device_synchronize, @tiny, @indices, @linearindex, @cartesianindex
 
 if !isdefined(Base, :get_extension)
     using Requires
