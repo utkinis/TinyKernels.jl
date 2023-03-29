@@ -1,8 +1,8 @@
 using CUDA
 using .TinyKernels
-using TinyKernels.CUDABackend
+using .TinyKernels.CUDABackend
 
-include("../example_2d.jl")
+include("../example_3d.jl")
 
 @static if CUDA.functional()
     println("running on CUDA device...")

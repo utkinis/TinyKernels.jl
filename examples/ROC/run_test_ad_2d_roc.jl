@@ -1,8 +1,10 @@
 using AMDGPU
+using Enzyme
 using .TinyKernels
 using .TinyKernels.ROCBackend
+using .TinyKernels.KernelAD
 
-include("../example_2d.jl")
+include("../test_ad_2d.jl")
 
 @static if AMDGPU.functional()
     println("running on AND device...")

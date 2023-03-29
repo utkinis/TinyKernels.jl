@@ -2,7 +2,7 @@ using AMDGPU
 using .TinyKernels
 using .TinyKernels.ROCBackend
 
-include("../example_2d.jl")
+include("../example_3d.jl")
 
 @static if AMDGPU.functional()
     println("running on AND device...")
