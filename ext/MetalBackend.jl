@@ -2,11 +2,12 @@ module MetalBackend
 
 export MetalDevice
 
-import TinyKernels
 isdefined(Base, :get_extension) ? (import Metal) : (import ..Metal)
+
 import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index, ndrange_to_indices
 
 struct MetalDevice <: GPUDevice end
+
 struct MetalEvent
     queue::Metal.MtlCommandQueue
 end
