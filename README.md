@@ -18,5 +18,6 @@ Stay tuned :rocket:
 ### Notes
 
 ⚠️ **Metal backend:**
+- Current version of TinyKernels require `Metal#main` (i.e. Metal.jl > v0.2.0)
 - Currently, only `Float32` is being supported. For `Float64`, one could try using a construct from [DoubleFloats.jl](https://github.com/JuliaMath/DoubleFloats.jl/blob/ef689ccbab37d84943e2533309d34c6665229cab/src/Double.jl#L30) _which may impact performance_.
 - Automatic differentiation (AD) capabilities are currently not working on ARM GPU (Metal) and giving erroneous results on ARM CPU.
