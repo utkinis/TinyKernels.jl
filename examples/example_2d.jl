@@ -8,7 +8,7 @@
     return
 end
 
-function main(::Type{DAT}; device) where {DAT}
+function main(::Type{DAT}; device) where DAT
     nx, ny = 4096, 4096
     A = device_array(DAT, device, nx, ny)
     B = device_array(DAT, device, nx, ny)
