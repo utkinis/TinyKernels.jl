@@ -1,14 +1,10 @@
 module CPUBackend
 
-export CPUDevice
-
-import TinyKernels: Backend, Kernel, device_array, device_synchronize, __get_index, ndrange_to_indices
-
-struct CPUDevice <: Backend end
-
-struct CPUEvent end
+import TinyKernels: CPUDevice, Kernel, device_array, device_synchronize, __get_index, ndrange_to_indices
 
 import Base: wait
+
+struct CPUEvent end
 
 wait(ev::CPUEvent) = nothing
 wait(evs::AbstractArray{CPUEvent}) = wait.(evs)

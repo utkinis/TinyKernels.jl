@@ -14,6 +14,8 @@ abstract type Backend end
 
 abstract type GPUDevice <: Backend end
 
+struct CPUDevice <: Backend end
+
 Kernel(fun, ::BackendType) where {BackendType} = Kernel{BackendType,typeof(fun)}(fun)
 
 Base.similar(::Kernel{BE}, f::F) where {BE,F} = Kernel{BE,F}(f)
