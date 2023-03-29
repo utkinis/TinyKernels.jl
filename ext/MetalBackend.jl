@@ -56,15 +56,15 @@ function pick_queue(pool::QueuePool)
     return pool.queues[pool.next_queue_idx]
 end
 
-function (k::Kernel{<:MetalDevice})(args...; ndrange, nthreads=nothing)
+function (k::Kernel{<:MetalDevice})(args...; ndrange, priority=:low, nthreads=nothing)
     ndrange = ndrange_to_indices(ndrange)
     if isnothing(nthreads)
         nthreads = min(length(ndrange), 256)
     end
     nblocks = cld(length(ndrange), nthreads)
     # launch kernel
-    queue = get_queue(:none) # no priority selection yet
-    Metal.@metal threads = nthreads grid = nblocks k.fun(ndrange, args...)
+    queue = get_queue(priority) # no priority selection yet
+    Metal.@metal threads = nthreads groups = nblocks k.fun(ndrange, args...)
     return MetalEvent(queue)
 end
 
