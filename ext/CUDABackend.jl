@@ -2,17 +2,23 @@ module CUDABackend
 
 export CUDADevice
 
-isdefined(Base, :get_extension) ? (import CUDA) : (import ..CUDA)
+@static if isdefined(Base, :get_extension)
+    import CUDA
+    import CUDA: @device_override
+else
+    import ..CUDA
+    import ..CUDA: @device_override
+end
 
 import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index, ndrange_to_indices
+
+import Base: wait
 
 struct CUDADevice <: GPUDevice end
 
 struct CUDAEvent
     event::CUDA.CuEvent
 end
-
-import Base: wait
 
 wait(ev::CUDAEvent) = CUDA.synchronize(ev.event)
 wait(evs::AbstractArray{CUDAEvent}) = wait.(evs)
@@ -67,8 +73,6 @@ end
 device_array(::Type{T}, ::CUDADevice, dims...) where T = CUDA.CuArray{T}(undef, dims)
 
 device_synchronize(::CUDADevice) = CUDA.synchronize()
-
-import CUDA: @device_override
 
 @device_override @inline __get_index() = (CUDA.blockIdx().x-1)*CUDA.blockDim().x + CUDA.threadIdx().x
 

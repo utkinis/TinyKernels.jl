@@ -2,9 +2,17 @@ module ROCBackend
 
 export ROCDevice
 
-isdefined(Base, :get_extension) ? (import AMDGPU) : (import ..AMDGPU)
+@static if isdefined(Base, :get_extension)
+    import AMDGPU
+    import AMDGPU: @device_override
+else
+    import ..AMDGPU
+    import ..AMDGPU: @device_override
+end
 
-import TinyKernels: GPUDevice, Kernel, __get_index, device_array, device_synchronize, ndrange_to_indices
+import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index,  ndrange_to_indices
+
+import Base: wait
 
 struct ROCDevice <: GPUDevice end
 
@@ -12,8 +20,6 @@ struct ROCEvent
     signal::AMDGPU.ROCSignal
     queue::AMDGPU.ROCQueue
 end
-
-import Base: wait
 
 wait(ev::ROCEvent) = wait(ev.signal; queue=ev.queue)
 wait(evs::AbstractArray{ROCEvent}) = wait.(evs)
@@ -69,8 +75,6 @@ function device_synchronize(::ROCDevice)
     wait(AMDGPU.barrier_and!(AMDGPU.default_queue(), AMDGPU.active_kernels(AMDGPU.default_queue())))
     return
 end
-
-import AMDGPU.Device: @device_override
 
 @device_override @inline __get_index() = (AMDGPU.workgroupIdx().x-1)*AMDGPU.workgroupDim().x + AMDGPU.workitemIdx().x
 

@@ -2,17 +2,23 @@ module MetalBackend
 
 export MetalDevice
 
-isdefined(Base, :get_extension) ? (import Metal) : (import ..Metal)
+@static if isdefined(Base, :get_extension)
+    import Metal
+    import Metal: @device_override
+else
+    import ..Metal
+    import ..Metal: @device_override
+end
 
 import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index, ndrange_to_indices
+
+import Base: wait
 
 struct MetalDevice <: GPUDevice end
 
 struct MetalEvent
     queue::Metal.MtlCommandQueue
 end
-
-import Base: wait
 
 wait(ev::MetalEvent) = Metal.synchronize(ev.queue)
 wait(evs::AbstractArray{MetalEvent}) = wait.(evs)
@@ -65,8 +71,6 @@ end
 device_array(::Type{T}, ::MetalDevice, dims...) where {T} = Metal.MtlArray{T}(undef, dims)
 
 device_synchronize(::MetalDevice) = Metal.synchronize() # device_synchronize() forces device sync
-
-import Metal: @device_override
 
 @device_override @inline __get_index() = Metal.thread_position_in_grid_1d()
 
