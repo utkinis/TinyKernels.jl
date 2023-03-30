@@ -23,6 +23,9 @@ Base.similar(::Kernel{BE}, f::F) where {BE,F} = Kernel{BE,F}(f)
 @inline ndrange_to_indices(ndrange::Tuple) = CartesianIndices(ndrange)
 @inline ndrange_to_indices(ndrange::AbstractUnitRange) = CartesianIndices((ndrange,))
 
+@inline get_nthreads(nthreads::Nothing, ndrange) = min(length(ndrange), 256)
+@inline get_nthreads(nthreads, ndrange) = nthreads
+
 const __INDEX__ = gensym("I")
 
 function device_array end
