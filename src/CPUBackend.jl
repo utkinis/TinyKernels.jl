@@ -34,3 +34,9 @@ function (k::Kernel{<:CPUDevice})(args::Vararg{Any,B}; ndrange::NTuple{N,T}, pri
     end
     return CPUEvent()
 end
+
+device_array(::Type{T}, ::CPUDevice, dims...) where {T} = Array{T}(undef, dims)
+
+device_synchronize(::CPUDevice) = nothing
+
+end # module
