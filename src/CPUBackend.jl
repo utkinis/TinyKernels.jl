@@ -1,14 +1,10 @@
 module CPUBackend
 
-export CPUDevice
-
-import TinyKernels: Backend, Kernel, device_array, device_synchronize, __get_index, ndrange_to_indices, get_nthreads
-
-struct CPUDevice <: Backend end
-
-struct CPUEvent end
+import TinyKernels: CPUDevice, Kernel, device_array, device_synchronize, __get_index, ndrange_to_indices, get_nthreads
 
 import Base: wait
+
+struct CPUEvent end
 
 wait(ev::CPUEvent) = nothing
 wait(evs::AbstractArray{CPUEvent}) = wait.(evs)
@@ -38,9 +34,3 @@ function (k::Kernel{<:CPUDevice})(args::Vararg{Any,B}; ndrange::NTuple{N,T}, pri
     end
     return CPUEvent()
 end
-
-device_array(::Type{T}, ::CPUDevice, dims...) where {T} = Array{T}(undef, dims)
-
-device_synchronize(::CPUDevice) = nothing
-
-end # module
