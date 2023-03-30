@@ -9,18 +9,18 @@ struct CPUEvent end
 wait(ev::CPUEvent) = nothing
 wait(evs::AbstractArray{CPUEvent}) = wait.(evs)
 
-@inline function split(ndrange::CartesianIndices, nthreads::NTuple{N,T}) where {N,T}
-    nblocks = ntuple(Val(N)) do I
+@inline function split(ndrange::CartesianIndices, nthreads::NTuple)
+    nblocks = ntuple(Val(length(nthreads))) do I
         return cld(size(ndrange, I), nthreads[I])
     end
     return nblocks
 end
 
-function (k::Kernel{<:CPUDevice})(args::Vararg{Any,B}; ndrange::NTuple{N,T}, priority=:low, nthreads=nothing) where {N,T,B}
+function (k::Kernel{<:CPUDevice})(args::Vararg{Any,B}; ndrange, priority=:low, nthreads=nothing) where {B}
     ndrange = ndrange_to_indices(ndrange)
     nthreads1 = get_nthreads(nthreads, ndrange)
     n = length(nthreads1)
-    nthreads2 = ntuple(Val(N)) do I
+    nthreads2 = ntuple(Val(ndims(ndrange))) do I
         Base.@_inline_meta
         I ≤ n ? nthreads1[I] : 1
     end
