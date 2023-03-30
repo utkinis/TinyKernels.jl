@@ -1,12 +1,12 @@
 # Test AD 2D
 
-@tiny function kernel_test!(RUx, RUy, Ux, Uy, ::Type{DAT}) where DAT
+@tiny function kernel_test!(RUx, RUy, Ux, Uy)
     ix, iy = @indices()
     if ix ∈ axes(RUx, 1) && iy ∈ axes(RUx, 2)
-        @inbounds RUx[ix, iy] = Ux[ix, iy]^2 - DAT(2.0) * Ux[ix+1, iy]^2 + Ux[ix+2, iy]^2 + DAT(0.5) * Uy[ix+1, iy]^2
+        @inbounds RUx[ix, iy] = Ux[ix, iy]^2 - convert(eltype(Ux), 2.0) * Ux[ix+1, iy]^2 + Ux[ix+2, iy]^2 + convert(eltype(Ux), 0.5) * Uy[ix+1, iy]^2
     end
     if ix ∈ axes(RUy, 1) && iy ∈ axes(RUy, 2)
-        @inbounds RUy[ix, iy] = Uy[ix, iy]^2 - DAT(2.0) * Uy[ix, iy+1]^2 + Uy[ix, iy+2]^2 + DAT(0.5) * Ux[ix, iy+1]^2
+        @inbounds RUy[ix, iy] = Uy[ix, iy]^2 - convert(eltype(Uy), 2.0) * Uy[ix, iy+1]^2 + Uy[ix, iy+2]^2 + convert(eltype(Uy), 0.5) * Ux[ix, iy+1]^2
     end
     return
 end
@@ -43,12 +43,12 @@ function main(::Type{DAT}; device) where DAT
     grad_test_kernel! = Enzyme.autodiff(test!)
     # Evaluate forward problem
     TinyKernels.device_synchronize(device)
-    wait(test!(RUx, RUy, Ux, Uy, DAT; ndrange=size(Ux)))
+    wait(test!(RUx, RUy, Ux, Uy; ndrange=size(Ux)))
     # Compute VJP
     wait(grad_test_kernel!(DuplicatedNoNeed(RUx, ∂Rx_∂R),
                            DuplicatedNoNeed(RUy, ∂Ry_∂R),
                            DuplicatedNoNeed(Ux , ∂Ux_∂R),
-                           DuplicatedNoNeed(Uy , ∂Uy_∂R), Const(DAT); ndrange=size(Ux)))
+                           DuplicatedNoNeed(Uy , ∂Uy_∂R); ndrange=size(Ux)))
     @assert ∂Ux_∂R ≈ ∂Ux_∂R_exact
     @assert ∂Uy_∂R ≈ ∂Uy_∂R_exact
     return
