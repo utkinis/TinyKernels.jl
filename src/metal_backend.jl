@@ -4,7 +4,7 @@ export MetalDevice
 
 import Metal
 
-import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index, ndrange_to_indices
+import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index, ndrange_to_indices, get_nthreads
 
 struct MetalDevice <: GPUDevice end
 struct MetalEvent
@@ -51,13 +51,11 @@ end
 
 function (k::Kernel{<:MetalDevice})(args...; ndrange, nthreads=nothing)
     ndrange = ndrange_to_indices(ndrange)
-    if isnothing(nthreads)
-        nthreads = min(length(ndrange), 256)
-    end
-    nblocks = cld(length(ndrange), nthreads)
+    nthreads1 = get_nthreads(nthreads, ndrange)
+    nblocks = cld(length(ndrange), nthreads1)
     # launch kernel
     queue = get_queue(:none) # no priority selection yet
-    Metal.@metal threads = nthreads grid = nblocks k.fun(ndrange, args...)
+    Metal.@metal threads = nthreads1 grid = nblocks k.fun(ndrange, args...)
     return MetalEvent(queue)
 end
 

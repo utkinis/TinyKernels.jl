@@ -4,7 +4,7 @@ export ROCDevice
 
 import AMDGPU
 
-import TinyKernels: GPUDevice, Kernel, __get_index, device_array, device_synchronize, ndrange_to_indices
+import TinyKernels: GPUDevice, Kernel, __get_index, device_array, device_synchronize, ndrange_to_indices, get_nthreads
 
 struct ROCDevice <: GPUDevice end
 
@@ -50,16 +50,14 @@ end
 
 function (k::Kernel{<:ROCDevice})(args...; ndrange, priority=:low, nthreads=nothing)
     ndrange = ndrange_to_indices(ndrange)
-    if isnothing(nthreads)
-        nthreads = min(length(ndrange), 256)
-    end
+    nthreads1 = get_nthreads(nthreads, ndrange)
     ngrid = length(ndrange)
     # create signal
     sig = AMDGPU.ROCSignal()
     # launch kernel
     queue = get_queue(priority)
     AMDGPU.HSA.signal_store_screlease(sig.signal, 1)
-    AMDGPU.@roc wait=false mark=false signal=sig groupsize=nthreads gridsize=ngrid queue=queue k.fun(ndrange, args...)
+    AMDGPU.@roc wait=false mark=false signal=sig groupsize=nthreads1 gridsize=ngrid queue=queue k.fun(ndrange, args...)
     return ROCEvent(sig, queue)
 end
 

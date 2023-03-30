@@ -4,7 +4,7 @@ export CUDADevice
 
 import CUDA
 
-import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index, ndrange_to_indices
+import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index, ndrange_to_indices, get_nthreads
 
 struct CUDADevice <: GPUDevice end
 
@@ -50,15 +50,13 @@ end
 
 function (k::Kernel{<:CUDADevice})(args...; ndrange, priority=:low, nthreads=nothing)
     ndrange = ndrange_to_indices(ndrange)
-    if isnothing(nthreads)
-        nthreads = min(length(ndrange), 256)
-    end
-    nblocks = cld(length(ndrange), nthreads)
+    nthreads1 = get_nthreads(nthreads, ndrange)
+    nblocks = cld(length(ndrange), nthreads1)
     # generate event
     event = CUDA.CuEvent(CUDA.EVENT_DISABLE_TIMING)
     # launch kernel
     stream = get_stream(priority)
-    CUDA.@cuda threads=nthreads blocks=nblocks stream=stream k.fun(ndrange, args...)
+    CUDA.@cuda threads=nthreads1 blocks=nblocks stream=stream k.fun(ndrange, args...)
     # record event
     CUDA.record(event, stream)
     return CUDAEvent(event)
