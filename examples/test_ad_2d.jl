@@ -1,6 +1,6 @@
 # Test AD 2D
 
-@tiny function kernel_test!(RUx, RUy, Ux, Uy, DAT)
+@tiny function kernel_test!(RUx, RUy, Ux, Uy, ::Type{DAT}) where DAT
     ix, iy = @indices()
     if ix ∈ axes(RUx, 1) && iy ∈ axes(RUx, 2)
         @inbounds RUx[ix, iy] = Ux[ix, iy]^2 - DAT(2.0) * Ux[ix+1, iy]^2 + Ux[ix+2, iy]^2 + DAT(0.5) * Uy[ix+1, iy]^2
