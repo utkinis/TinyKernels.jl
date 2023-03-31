@@ -16,7 +16,7 @@ wait(evs::AbstractArray{CPUEvent}) = wait.(evs)
     return nblocks
 end
 
-function (k::Kernel{<:CPUDevice})(args::Vararg{Any,B}; ndrange, priority=:low, nthreads=nothing) where {B}
+function (k::Kernel{<:CPUDevice})(args...; ndrange, priority=:low, nthreads=nothing)
     ndrange = ndrange_to_indices(ndrange)
     nthreads1 = get_nthreads(nthreads, ndrange)
     n = length(nthreads1)
