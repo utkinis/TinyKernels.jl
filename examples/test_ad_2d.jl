@@ -9,6 +9,7 @@ include("setup_example.jl")
 backend = :CPU
 
 @setup_example()
+
 @tiny function kernel_test!(RUx, RUy, Ux, Uy)
     ix, iy = @indices()
     if ix ∈ axes(RUx, 1) && iy ∈ axes(RUx, 2)
