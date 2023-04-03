@@ -1,26 +1,14 @@
 # example triad 2D kernel
 using Enzyme
 using TinyKernels
-using TinyKernels.CPUBackend
 using TinyKernels.KernelAD
 
-# Select based upon your local device (:CUDA, :AMDGPU, :Metal)
-run = :none
+include("setup_example.jl")
 
-@static if run == :CUDA
-    using CUDA
-    CUDA.functional() && (using TinyKernels.CUDABackend)
-    device = CUDADevice()
-elseif run == :AMDGPU
-    using AMDGPU
-    AMDGPU.functional() && (using TinyKernels.ROCBackend)
-    device = ROCBackend.ROCDevice()
-elseif run == :Metal
-    using Metal
-    Metal.functional() && (using TinyKernels.MetalBackend)
-    device = MetalDevice()
-end
+# Select based upon your local device (:CPU, :CUDA, :AMDGPU, :Metal)
+backend = :CPU
 
+@setup_example()
 @tiny function kernel_test!(RUx, RUy, Ux, Uy)
     ix, iy = @indices()
     if ix ∈ axes(RUx, 1) && iy ∈ axes(RUx, 2)
@@ -75,16 +63,5 @@ function main(::Type{DAT}; device) where DAT
     return
 end
 
-@static if run == :CUDA
-    println("running on CUDA device...")
-    main(Float64; device)
-elseif run == :AMDGPU
-    println("running on AMD device...")
-    main(Float64; device)
-elseif run == :Metal
-    println("running on Metal device...")
-    main(Float32; device)
-end
-
-println("running on CPU device...")
-main(Float64; device=CPUDevice())
+println("running on $backend device...")
+main(eletype; device)
