@@ -1,9 +1,8 @@
 module KernelAD
 
-import Enzyme
+@static isdefined(Base, :get_extension) ? (import Enzyme) : (import ..Enzyme)
 
-import TinyKernels: Kernel, GPUDevice
-import TinyKernels.CPUBackend: CPUDevice
+import TinyKernels: GPUDevice, CPUDevice, Kernel
 
 function Enzyme.autodiff(kernel::Kernel{<:GPUDevice, Fun}) where Fun
     fun = kernel.fun

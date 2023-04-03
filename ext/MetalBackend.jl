@@ -2,23 +2,30 @@ module MetalBackend
 
 export MetalDevice
 
-import Metal
+@static if isdefined(Base, :get_extension)
+    import Metal
+    import Metal: @device_override
+else
+    import ..Metal
+    import ..Metal: @device_override
+end
 
 import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index, ndrange_to_indices
 
-struct MetalDevice <: GPUDevice end
-struct MetalEvent
-    queue::Metal.MtlCommandQueue
-end
-
 import Base: wait
+
+struct MetalDevice <: GPUDevice end
+
+struct MetalEvent
+    queue::Metal.MTLCommandQueue
+end
 
 wait(ev::MetalEvent) = Metal.synchronize(ev.queue)
 wait(evs::AbstractArray{MetalEvent}) = wait.(evs)
 
 mutable struct QueuePool
     next_queue_idx::Int
-    queues::Vector{Metal.MtlCommandQueue}
+    queues::Vector{Metal.MTLCommandQueue}
 end
 
 const MAX_QUEUES = 6
@@ -37,7 +44,7 @@ function get_queue(priority::Symbol) # no priority selection yet
         #     error("unknown priority $priority")
         # end
         dev = Metal.current_device()
-        QueuePool(1, [Metal.MtlCommandQueue(dev) for _ in 1:max_queues])
+        QueuePool(1, [Metal.MTLCommandQueue(dev) for _ in 1:max_queues])
     end
     return pick_queue(pool)
 end
@@ -49,23 +56,21 @@ function pick_queue(pool::QueuePool)
     return pool.queues[pool.next_queue_idx]
 end
 
-function (k::Kernel{<:MetalDevice})(args...; ndrange, nthreads=nothing)
+function (k::Kernel{<:MetalDevice})(args...; ndrange, priority=:low, nthreads=nothing)
     ndrange = ndrange_to_indices(ndrange)
     if isnothing(nthreads)
         nthreads = min(length(ndrange), 256)
     end
     nblocks = cld(length(ndrange), nthreads)
     # launch kernel
-    queue = get_queue(:none) # no priority selection yet
-    Metal.@metal threads = nthreads grid = nblocks k.fun(ndrange, args...)
+    queue = get_queue(priority) # no priority selection yet
+    Metal.@metal threads = nthreads groups = nblocks k.fun(ndrange, args...)
     return MetalEvent(queue)
 end
 
 device_array(::Type{T}, ::MetalDevice, dims...) where {T} = Metal.MtlArray{T}(undef, dims)
 
 device_synchronize(::MetalDevice) = Metal.synchronize() # device_synchronize() forces device sync
-
-import Metal: @device_override
 
 @device_override @inline __get_index() = Metal.thread_position_in_grid_1d()
 
