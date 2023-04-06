@@ -1,6 +1,4 @@
-module MetalBackend
-
-export MetalDevice
+module MetalExt
 
 @static if isdefined(Base, :get_extension)
     import Metal
@@ -10,13 +8,12 @@ else
     import ..Metal: @device_override
 end
 
-import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index, ndrange_to_indices
+import TinyKernels: MetalDevice, AbstractEvent, Kernel
+import TinyKernels: device_array, device_synchronize, __get_index, ndrange_to_indices
 
 import Base: wait
 
-struct MetalDevice <: GPUDevice end
-
-struct MetalEvent
+struct MetalEvent <: AbstractEvent
     queue::Metal.MTLCommandQueue
 end
 
@@ -30,19 +27,10 @@ end
 
 const MAX_QUEUES = 6
 const QUEUES = Dict{Symbol,QueuePool}()
-# const QUEUES = Dict{Nothing,QueuePool}()
 
 function get_queue(priority::Symbol) # no priority selection yet
     pool = get!(QUEUES, priority) do
         max_queues = MAX_QUEUES
-        # priorities = Metal.priority_range()
-        # mtl_priority = if priority == :high
-        #     minimum(priorities)
-        # elseif priority == :low
-        #     maximum(priorities)
-        # else
-        #     error("unknown priority $priority")
-        # end
         dev = Metal.current_device()
         QueuePool(1, [Metal.MTLCommandQueue(dev) for _ in 1:max_queues])
     end

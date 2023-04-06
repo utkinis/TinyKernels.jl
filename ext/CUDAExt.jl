@@ -1,6 +1,4 @@
-module CUDABackend
-
-export CUDADevice
+module CUDAExt
 
 @static if isdefined(Base, :get_extension)
     import CUDA
@@ -10,13 +8,12 @@ else
     import ..CUDA: @device_override
 end
 
-import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index, ndrange_to_indices
+import TinyKernels: CUDADevice, AbstractEvent, Kernel
+import TinyKernels: device_array, device_synchronize, __get_index, ndrange_to_indices
 
 import Base: wait
 
-struct CUDADevice <: GPUDevice end
-
-struct CUDAEvent
+struct CUDAEvent <: AbstractEvent
     event::CUDA.CuEvent
 end
 

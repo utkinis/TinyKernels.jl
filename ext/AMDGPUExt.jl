@@ -1,6 +1,4 @@
-module ROCBackend
-
-export ROCDevice
+module AMDGPUExt
 
 @static if isdefined(Base, :get_extension)
     import AMDGPU
@@ -10,19 +8,18 @@ else
     import ..AMDGPU: @device_override
 end
 
-import TinyKernels: GPUDevice, Kernel, device_array, device_synchronize, __get_index,  ndrange_to_indices
+import TinyKernels: AMDGPUDevice, AbstractEvent, Kernel
+import TinyKernels: device_array, device_synchronize, __get_index,  ndrange_to_indices
 
 import Base: wait
 
-struct ROCDevice <: GPUDevice end
-
-struct ROCEvent
+struct AMDGPUEvent <: AbstractEvent
     signal::AMDGPU.ROCSignal
     queue::AMDGPU.ROCQueue
 end
 
-wait(ev::ROCEvent) = wait(ev.signal; queue=ev.queue)
-wait(evs::AbstractArray{ROCEvent}) = wait.(evs)
+wait(ev::AMDGPUEvent) = wait(ev.signal; queue=ev.queue)
+wait(evs::AbstractArray{AMDGPUEvent}) = wait.(evs)
 
 mutable struct QueuePool
     next_queue_idx::Int
@@ -54,7 +51,7 @@ function pick_queue(pool::QueuePool)
     return pool.queues[pool.next_queue_idx]
 end
 
-function (k::Kernel{<:ROCDevice})(args...; ndrange, priority=:low, nthreads=nothing)
+function (k::Kernel{<:AMDGPUDevice})(args...; ndrange, priority=:low, nthreads=nothing)
     ndrange = ndrange_to_indices(ndrange)
     if isnothing(nthreads)
         nthreads = min(length(ndrange), 256)
@@ -66,12 +63,12 @@ function (k::Kernel{<:ROCDevice})(args...; ndrange, priority=:low, nthreads=noth
     queue = get_queue(priority)
     AMDGPU.HSA.signal_store_screlease(sig.signal, 1)
     AMDGPU.@roc wait=false mark=false signal=sig groupsize=nthreads gridsize=ngrid queue=queue k.fun(ndrange, args...)
-    return ROCEvent(sig, queue)
+    return AMDGPUEvent(sig, queue)
 end
 
-device_array(::Type{T}, ::ROCDevice, dims...) where T = AMDGPU.ROCArray{T}(undef, dims)
+device_array(::Type{T}, ::AMDGPUDevice, dims...) where T = AMDGPU.ROCArray{T}(undef, dims)
 
-function device_synchronize(::ROCDevice)
+function device_synchronize(::AMDGPUDevice)
     wait(AMDGPU.barrier_and!(AMDGPU.default_queue(), AMDGPU.active_kernels(AMDGPU.default_queue())))
     return
 end

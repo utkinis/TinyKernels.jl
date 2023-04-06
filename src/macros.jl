@@ -55,7 +55,7 @@ macro tiny(expr)
     # create constructors
     constructors = quote
         if $(name isa Symbol ? :(!@isdefined($name)) : true)
-            function $name(device::GPUDevice)
+            function $name(device::AbstractGPUDevice)
                 return Kernel($(def_gpu[:name]), device)
             end
             function $name(device::CPUDevice)

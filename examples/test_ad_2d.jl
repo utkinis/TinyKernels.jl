@@ -1,7 +1,6 @@
 # example triad 2D kernel
 using Enzyme
 using TinyKernels
-using TinyKernels.KernelAD
 
 include("setup_example.jl")
 
