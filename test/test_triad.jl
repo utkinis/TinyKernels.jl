@@ -1,6 +1,5 @@
 using Test
 using TinyKernels
-using TinyKernels.CPUBackend
 
 device = CPUDevice()
 DAT = Float64

@@ -1,8 +1,6 @@
 using Test
 using Enzyme
 using TinyKernels
-using TinyKernels.KernelAD
-using TinyKernels.CPUBackend
 
 device = CPUDevice()
 DAT = Float64
