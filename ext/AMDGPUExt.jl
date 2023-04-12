@@ -2,10 +2,10 @@ module AMDGPUExt
 
 @static if isdefined(Base, :get_extension)
     import AMDGPU
-    import AMDGPU: @device_override
+    import AMDGPU.Device: @device_override
 else
     import ..AMDGPU
-    import ..AMDGPU: @device_override
+    import ..AMDGPU.Device: @device_override
 end
 
 import TinyKernels: AMDGPUDevice, AbstractEvent, Kernel
