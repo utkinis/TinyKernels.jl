@@ -7,7 +7,7 @@ import TinyKernels: AbstractGPUDevice, CPUDevice, Kernel
 function Enzyme.autodiff(kernel::Kernel{<:AbstractGPUDevice, Fun}) where Fun
     fun = kernel.fun
     function df(ctx, args...)
-        Enzyme.autodiff_deferred(fun::Fun, Enzyme.Const, ctx, args...)
+        Enzyme.autodiff_deferred(Enzyme.Reverse, fun::Fun, Enzyme.Const, ctx, args...)
         return
     end
     similar(kernel, df)
