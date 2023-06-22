@@ -72,4 +72,4 @@ device_synchronize(::AMDGPUDevice) = AMDGPU.synchronize()
 
 @device_override @inline __get_index() = (AMDGPU.workgroupIdx().x-1)*AMDGPU.workgroupDim().x + AMDGPU.workitemIdx().x
 
-end
+end # module
