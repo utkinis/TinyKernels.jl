@@ -38,7 +38,7 @@ function get_stream(priority::Symbol)
         else
             error("unknown priority $priority")
         end
-        StreamPool(1, [AMDGPU.HIPStream(roc_priority) for _ in 1:max_streams])
+        StreamPool(0, [AMDGPU.HIPStream(roc_priority) for _ in 1:max_streams])
     end
     return pick_stream(pool)
 end

@@ -32,7 +32,7 @@ function get_queue(priority::Symbol) # no priority selection yet
     pool = get!(QUEUES, priority) do
         max_queues = MAX_QUEUES
         dev = Metal.current_device()
-        QueuePool(1, [Metal.MTLCommandQueue(dev) for _ in 1:max_queues])
+        QueuePool(0, [Metal.MTLCommandQueue(dev) for _ in 1:max_queues])
     end
     return pick_queue(pool)
 end
