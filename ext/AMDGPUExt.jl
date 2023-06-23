@@ -44,7 +44,7 @@ function get_stream(priority::Symbol)
 end
 
 function pick_stream(pool::StreamPool)
-    # round-robin queue selection
+    # round-robin stream selection
     pool.next_stream_idx += 1
     pool.next_stream_idx = ((pool.next_stream_idx - 1) % length(pool.streams)) + 1
     return pool.streams[pool.next_stream_idx]
