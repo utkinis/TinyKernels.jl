@@ -9,7 +9,7 @@ else
 end
 
 import TinyKernels: CUDADevice, AbstractEvent, Kernel
-import TinyKernels: device_array, device_synchronize, __get_index, ndrange_to_indices
+import TinyKernels: device_array, device_synchronize, synchronize, __get_index, ndrange_to_indices
 
 import Base: wait
 
@@ -69,7 +69,9 @@ end
 
 device_array(::Type{T}, ::CUDADevice, dims...) where T = CUDA.CuArray{T}(undef, dims)
 
-device_synchronize(::CUDADevice) = CUDA.synchronize()
+device_synchronize(::CUDADevice) = CUDA.device_synchronize()
+
+synchronize(::CUDADevice) = CUDA.synchronize()
 
 @device_override @inline __get_index() = (CUDA.blockIdx().x-1)*CUDA.blockDim().x + CUDA.threadIdx().x
 

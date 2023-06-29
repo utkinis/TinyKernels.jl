@@ -2,7 +2,7 @@ module TinyKernels
 
 export Kernel, AbstractDevice, AbstractGPUDevice
 export CPUDevice, CUDADevice, AMDGPUDevice, MetalDevice
-export device_array, device_synchronize, @tiny, @indices, @linearindex, @cartesianindex
+export device_array, device_synchronize, synchronize, @tiny, @indices, @linearindex, @cartesianindex
 
 if !isdefined(Base, :get_extension)
     using Requires
@@ -47,6 +47,8 @@ const __INDEX__ = gensym("I")
 function device_array end
 
 function device_synchronize end
+
+function synchronize end
 
 function __get_index end
 
