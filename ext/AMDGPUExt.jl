@@ -9,7 +9,7 @@ else
 end
 
 import TinyKernels: AMDGPUDevice, AbstractEvent, Kernel
-import TinyKernels: device_array, device_synchronize, __get_index,  ndrange_to_indices
+import TinyKernels: device_array, device_synchronize, synchronize, __get_index,  ndrange_to_indices
 
 import Base: wait
 
@@ -65,7 +65,9 @@ end
 
 device_array(::Type{T}, ::AMDGPUDevice, dims...) where T = AMDGPU.ROCArray{T}(undef, dims)
 
-device_synchronize(::AMDGPUDevice) = AMDGPU.synchronize()
+device_synchronize(::AMDGPUDevice) = AMDGPU.HIP.device_synchronize()
+
+synchronize(::AMDGPUDevice) = AMDGPU.synchronize()
 
 @device_override @inline __get_index() = (AMDGPU.workgroupIdx().x-1)*AMDGPU.workgroupDim().x + AMDGPU.workitemIdx().x
 
