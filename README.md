@@ -6,7 +6,7 @@
 
 TinyKernels.jl is mostly a heavily stripped-down version of [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl) supporting the bare minimum of the features. This package provides a sandbox for Julia GPU tooling and to measure the performance of kernels in a GPU-agnostic way. While the API of KernelAbstractions.jl is in a "transient" state, this package will provide the thin abstraction layer on top the [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl), [AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl) and [Metal.jl](https://github.com/JuliaGPU/Metal.jl) packages.
 
-TinyKernels.jl allows to explicitly launch GPU kernels asynchronously on different streams or queues with given priority. This feature facilitates the overlap between computations and memory transfers in distributed configurations.
+TinyKernels.jl allows to explicitly launch GPU kernels asynchronously on different streams with given priority. This feature facilitates the overlap between computations and memory transfers in distributed configurations.
 
 TinyKernels.jl supports automatic differentiation with [Enzyme.jl](https://github.com/EnzymeAD/Enzyme.jl) overloading the `Enzyme.autodiff` function to enable reverse mode AD of GPU (and CPU) kernels.
 
@@ -14,12 +14,7 @@ Preliminary benchmarks can be found in [TinyBenchmarks.jl](https://github.com/lu
 
 Stay tuned :rocket:
 
-### Compat
-- AMDGPU ≥ v0.4.8
-- CUDA ≥ 3.13
-- Metal ≥ v0.3.0
 ### Notes
 
 ⚠️ **Metal backend:**
 - Only `Float32` is being supported. For `Float64`, one could try using a construct from [DoubleFloats.jl](https://github.com/JuliaMath/DoubleFloats.jl/blob/ef689ccbab37d84943e2533309d34c6665229cab/src/Double.jl#L30) _which may impact performance_.
-- Automatic differentiation (AD) capabilities (Enzyme.jl) are currently not working on ARM GPU (Metal) and giving erroneous results on ARM CPU.
