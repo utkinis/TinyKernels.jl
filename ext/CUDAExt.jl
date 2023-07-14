@@ -9,7 +9,7 @@ else
 end
 
 import TinyKernels: CUDADevice, AbstractEvent, Kernel
-import TinyKernels: device_array, device_synchronize, __get_index, ndrange_to_indices
+import TinyKernels: device_array, device_synchronize, synchronize, __get_index, ndrange_to_indices
 
 import Base: wait
 
@@ -39,7 +39,7 @@ function get_stream(priority::Symbol)
         else
             error("unknown priority $priority")
         end
-        StreamPool(1, [CUDA.CuStream(; priority=cu_priority) for _ in 1:max_streams])
+        StreamPool(0, [CUDA.CuStream(; priority=cu_priority) for _ in 1:max_streams])
     end
     return pick_stream(pool)
 end
@@ -69,7 +69,9 @@ end
 
 device_array(::Type{T}, ::CUDADevice, dims...) where T = CUDA.CuArray{T}(undef, dims)
 
-device_synchronize(::CUDADevice) = CUDA.synchronize()
+device_synchronize(::CUDADevice) = CUDA.device_synchronize()
+
+synchronize(::CUDADevice) = CUDA.synchronize()
 
 @device_override @inline __get_index() = (CUDA.blockIdx().x-1)*CUDA.blockDim().x + CUDA.threadIdx().x
 

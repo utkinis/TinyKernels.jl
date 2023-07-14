@@ -9,7 +9,7 @@ else
 end
 
 import TinyKernels: MetalDevice, AbstractEvent, Kernel
-import TinyKernels: device_array, device_synchronize, __get_index, ndrange_to_indices
+import TinyKernels: device_array, device_synchronize, synchronize, __get_index, ndrange_to_indices
 
 import Base: wait
 
@@ -32,7 +32,7 @@ function get_queue(priority::Symbol) # no priority selection yet
     pool = get!(QUEUES, priority) do
         max_queues = MAX_QUEUES
         dev = Metal.current_device()
-        QueuePool(1, [Metal.MTLCommandQueue(dev) for _ in 1:max_queues])
+        QueuePool(0, [Metal.MTLCommandQueue(dev) for _ in 1:max_queues])
     end
     return pick_queue(pool)
 end
@@ -58,7 +58,9 @@ end
 
 device_array(::Type{T}, ::MetalDevice, dims...) where {T} = Metal.MtlArray{T}(undef, dims)
 
-device_synchronize(::MetalDevice) = Metal.synchronize() # device_synchronize() forces device sync
+device_synchronize(::MetalDevice) = Metal.device_synchronize() # device_synchronize() forces device sync
+
+synchronize(::MetalDevice) = Metal.synchronize()
 
 @device_override @inline __get_index() = Metal.thread_position_in_grid_1d()
 

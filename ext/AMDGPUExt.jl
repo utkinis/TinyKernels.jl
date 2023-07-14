@@ -9,20 +9,20 @@ else
 end
 
 import TinyKernels: AMDGPUDevice, AbstractEvent, Kernel
-import TinyKernels: device_array, device_synchronize, __get_index,  ndrange_to_indices
+import TinyKernels: device_array, device_synchronize, synchronize, __get_index,  ndrange_to_indices
 
 import Base: wait
 
 struct AMDGPUEvent <: AbstractEvent
-    event::AMDGPU.HIPEvent
+    event::AMDGPU.HIP.HIPEvent
 end
 
-wait(ev::AMDGPUEvent) = AMDGPU.synchronize(ev.event)
+wait(ev::AMDGPUEvent) = AMDGPU.HIP.synchronize(ev.event)
 wait(evs::AbstractArray{AMDGPUEvent}) = wait.(evs)
 
 mutable struct StreamPool
     next_stream_idx::Int
-    queues::Vector{AMDGPU.HIPStream}
+    streams::Vector{AMDGPU.HIPStream}
 end
 
 const MAX_STREAMS = 6
@@ -38,13 +38,13 @@ function get_stream(priority::Symbol)
         else
             error("unknown priority $priority")
         end
-        StreamPool(1, [AMDGPU.Stream(; priority=roc_priority) for _ in 1:max_streams])
+        StreamPool(0, [AMDGPU.HIPStream(roc_priority) for _ in 1:max_streams])
     end
     return pick_stream(pool)
 end
 
 function pick_stream(pool::StreamPool)
-    # round-robin queue selection
+    # round-robin stream selection
     pool.next_stream_idx += 1
     pool.next_stream_idx = ((pool.next_stream_idx - 1) % length(pool.streams)) + 1
     return pool.streams[pool.next_stream_idx]
@@ -56,19 +56,18 @@ function (k::Kernel{<:AMDGPUDevice})(args...; ndrange, priority=:low, nthreads=n
         nthreads = min(length(ndrange), 256)
     end
     nblocks = cld(length(ndrange), nthreads)
-    # generate event
-    event = AMDGPU.HIPEvent() # DEBUG: unsure about this
-    # launch kernel
     stream = get_stream(priority)
+    event = AMDGPU.HIP.HIPEvent(stream)
     AMDGPU.@roc groupsize=nthreads gridsize=nblocks stream=stream k.fun(ndrange, args...)
-    # record event
-    AMDGPU.record(event, stream)
+    AMDGPU.HIP.record(event)
     return AMDGPUEvent(event)
 end
 
 device_array(::Type{T}, ::AMDGPUDevice, dims...) where T = AMDGPU.ROCArray{T}(undef, dims)
 
-device_synchronize(::AMDGPUDevice) = AMDGPU.synchronize()
+device_synchronize(::AMDGPUDevice) = AMDGPU.HIP.device_synchronize()
+
+synchronize(::AMDGPUDevice) = AMDGPU.synchronize()
 
 @device_override @inline __get_index() = (AMDGPU.workgroupIdx().x-1)*AMDGPU.workgroupDim().x + AMDGPU.workitemIdx().x
 
