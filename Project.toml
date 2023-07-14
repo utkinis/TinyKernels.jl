@@ -1,26 +1,33 @@
 name = "TinyKernels"
 uuid = "f7cbc414-f748-44bf-86e6-e44e9a55e39d"
 authors = ["Ivan Utkin <iutkin@ethz.ch> and Ludovic Raess <ludovic.rass@gmail.com>"]
-version = "0.3.2"
+version = "0.4.0"
 
 [deps]
 MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
+Metal = "dde4c033-4e86-420c-a63e-0dd931031962"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 
-[extensions]
-CUDAExt = "CUDA"
-AMDGPUExt = "AMDGPU"
-MetalExt = "Metal"
-EnzymeExt = "Enzyme"
-
-[extras]
-CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
-AMDGPU = "21141c5a-9bdb-4563-92ae-f87d6854732e"
-Metal = "dde4c033-4e86-420c-a63e-0dd931031962"
-Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
+[compat]
+AMDGPU = "0.5"
+CUDA = "4"
+Enzyme = "0.11"
+Metal = "0.5"
 
 [weakdeps]
-CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 AMDGPU = "21141c5a-9bdb-4563-92ae-f87d6854732e"
-Metal = "dde4c033-4e86-420c-a63e-0dd931031962"
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
+Metal = "dde4c033-4e86-420c-a63e-0dd931031962"
+
+[extensions]
+AMDGPUExt = "AMDGPU"
+CUDAExt = "CUDA"
+EnzymeExt = "Enzyme"
+MetalExt = "Metal"
+
+[extras]
+AMDGPU = "21141c5a-9bdb-4563-92ae-f87d6854732e"
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
+Metal = "dde4c033-4e86-420c-a63e-0dd931031962"
