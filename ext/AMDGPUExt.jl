@@ -9,29 +9,28 @@ else
 end
 
 import TinyKernels: AMDGPUDevice, AbstractEvent, Kernel
-import TinyKernels: device_array, device_synchronize, __get_index,  ndrange_to_indices
+import TinyKernels: device_array, device_synchronize, synchronize, __get_index,  ndrange_to_indices
 
 import Base: wait
 
 struct AMDGPUEvent <: AbstractEvent
-    signal::AMDGPU.ROCSignal
-    queue::AMDGPU.ROCQueue
+    event::AMDGPU.HIP.HIPEvent
 end
 
-wait(ev::AMDGPUEvent) = wait(ev.signal; queue=ev.queue)
+wait(ev::AMDGPUEvent) = AMDGPU.HIP.synchronize(ev.event)
 wait(evs::AbstractArray{AMDGPUEvent}) = wait.(evs)
 
-mutable struct QueuePool
-    next_queue_idx::Int
-    queues::Vector{AMDGPU.ROCQueue}
+mutable struct StreamPool
+    next_stream_idx::Int
+    streams::Vector{AMDGPU.HIPStream}
 end
 
-const MAX_QUEUES = 2
-const QUEUES = Dict{Symbol,QueuePool}()
+const MAX_STREAMS = 6
+const STREAMS = Dict{Symbol,StreamPool}()
 
-function get_queue(priority::Symbol)
-    pool = get!(QUEUES, priority) do
-        max_queues = MAX_QUEUES
+function get_stream(priority::Symbol)
+    pool = get!(STREAMS, priority) do
+        max_streams = MAX_STREAMS
         roc_priority = if priority == :high
             :high
         elseif priority == :low
@@ -39,16 +38,16 @@ function get_queue(priority::Symbol)
         else
             error("unknown priority $priority")
         end
-        QueuePool(1, [AMDGPU.ROCQueue(AMDGPU.default_device(); priority=roc_priority) for _ in 1:max_queues])
+        StreamPool(0, [AMDGPU.HIPStream(roc_priority) for _ in 1:max_streams])
     end
-    return pick_queue(pool)
+    return pick_stream(pool)
 end
 
-function pick_queue(pool::QueuePool)
-    # round-robin queue selection
-    pool.next_queue_idx += 1
-    pool.next_queue_idx = ((pool.next_queue_idx - 1) % length(pool.queues)) + 1
-    return pool.queues[pool.next_queue_idx]
+function pick_stream(pool::StreamPool)
+    # round-robin stream selection
+    pool.next_stream_idx += 1
+    pool.next_stream_idx = ((pool.next_stream_idx - 1) % length(pool.streams)) + 1
+    return pool.streams[pool.next_stream_idx]
 end
 
 function (k::Kernel{<:AMDGPUDevice})(args...; ndrange, priority=:low, nthreads=nothing)
@@ -56,23 +55,20 @@ function (k::Kernel{<:AMDGPUDevice})(args...; ndrange, priority=:low, nthreads=n
     if isnothing(nthreads)
         nthreads = min(length(ndrange), 256)
     end
-    ngrid = length(ndrange)
-    # create signal
-    sig = AMDGPU.ROCSignal()
-    # launch kernel
-    queue = get_queue(priority)
-    AMDGPU.HSA.signal_store_screlease(sig.signal, 1)
-    AMDGPU.@roc wait=false mark=false signal=sig groupsize=nthreads gridsize=ngrid queue=queue k.fun(ndrange, args...)
-    return AMDGPUEvent(sig, queue)
+    nblocks = cld(length(ndrange), nthreads)
+    stream = get_stream(priority)
+    event = AMDGPU.HIP.HIPEvent(stream)
+    AMDGPU.@roc groupsize=nthreads gridsize=nblocks stream=stream k.fun(ndrange, args...)
+    AMDGPU.HIP.record(event)
+    return AMDGPUEvent(event)
 end
 
 device_array(::Type{T}, ::AMDGPUDevice, dims...) where T = AMDGPU.ROCArray{T}(undef, dims)
 
-function device_synchronize(::AMDGPUDevice)
-    wait(AMDGPU.barrier_and!(AMDGPU.default_queue(), AMDGPU.active_kernels(AMDGPU.default_queue())))
-    return
-end
+device_synchronize(::AMDGPUDevice) = AMDGPU.HIP.device_synchronize()
+
+synchronize(::AMDGPUDevice) = AMDGPU.synchronize()
 
 @device_override @inline __get_index() = (AMDGPU.workgroupIdx().x-1)*AMDGPU.workgroupDim().x + AMDGPU.workitemIdx().x
 
-end
+end # module
